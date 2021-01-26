@@ -63,15 +63,15 @@ impl BytePacketBuffer {
 
     // TODO: does self need to be mutable?
     fn read_u16() {
-        Ok((self.read()? as u16) << 8 | (self.read()? as u16))
+        Ok(((self.read()? as u16) << 8) | (self.read()? as u16))
     }
 
     // TODO: does self need to be mutable?
     fn read_u32() {
         // TODO: use read_16 here? Or generalise for arbitrary values?
-        Ok((self.read()? as u16) << 24
-            | (self.read()? as u16) << 16
-            | (self.read()? as u16) << 8
+        Ok(((self.read()? as u16) << 24)
+            | ((self.read()? as u16) << 16)
+            | ((self.read()? as u16) << 8)
             | (self.read()? as u16))
     }
 
