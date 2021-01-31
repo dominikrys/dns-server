@@ -1,5 +1,5 @@
-// Full header: http://www.networksorcery.com/enp/protocol/dns.htm
-
+// Reference: http://www.networksorcery.com/enp/protocol/dns.htm
+// TODO: maybe rename to "header"
 #[derive(Clone, Debug)]
 pub struct DnsHeader {
     pub id: u16, // 16 bits
@@ -23,7 +23,7 @@ pub struct DnsHeader {
 }
 
 impl DnsHeader {
-    pub fn new() -> DnsHeader {
+    pub fn new() -> Self {
         DnsHeader {
             response: false,
             opcode: 0,
@@ -48,6 +48,7 @@ impl DnsHeader {
     // TODO: rename this - this is more like creation from buffer
     // TODO: have a constructor for this, and not return an input
     pub fn read(&mut self, &mut buffer: BytePacketBuffer) -> Result<()> {
+        // TODO: reset buffer pos?
         self.id = buffer.read_u16()?;
 
         let flags = buffer.read_u16()?;

@@ -1,3 +1,4 @@
+// TODO: see if all these traits are needed
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum ReturnCode {
     NOERROR = 0,
@@ -11,7 +12,7 @@ pub enum ReturnCode {
 // TODO: maybe use num-derive crate instead
 // https://enodev.fr/posts/rusticity-convert-an-integer-to-an-enum.html
 impl ReturnCode {
-    pub fn from_num(num: u8) -> ReturnCode {
+    pub fn from_num(num: u8) -> Self {
         match num {
             1 => ReturnCode::FORMERR,
             2 => ReturnCode::SERVFAIL,
