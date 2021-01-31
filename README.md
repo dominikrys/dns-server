@@ -11,3 +11,4 @@
 - sort out directory structure
 - add tests?
   - maybe just important ones if necessary
+- CI pipeline. Use GitHub or CircleCI.
