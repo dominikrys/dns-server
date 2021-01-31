@@ -26,7 +26,7 @@ impl ResourceRecord {
         buffer.read_qname(&mut domain)?;
 
         let qtype_num = buffer.read_u16()?;
-        let qtype = QueryType::from_num(qtype_num); // TODO: maybe combine these two in one
+        let qtype = QuestionType::from_num(qtype_num); // TODO: maybe combine these two in one
         let _ = buffer.read_u16()?; // Class
         let ttl = buffer.read_u32()?;
         let data_len = buffer.read_u16()?;
@@ -34,7 +34,7 @@ impl ResourceRecord {
         // TODO: use the data_len in here somehow, maybe check for limit
         // TODO: support IPv6? Or mention that it's IPv4 only and that it will break otherwise
         match qtype {
-            QueryType::A => {
+            QuestionType::A => {
                 let raw_ip_addr = buffer.read_u32()?;
                 let ip_addr = Ipv4Addr::new(
                     ((raw_ip_addr >> 24) & 0xFF) as u8,
@@ -50,7 +50,7 @@ impl ResourceRecord {
                     ttl: ttl,
                 })
             }
-            QueryType::UNKNOWN(_) => {
+            QuestionType::UNKNOWN(_) => {
                 buffer.step(data_len as usize)?; // TODO: what's the point of this? To see if it returns a negative result?
 
                 Ok(DnsRecord::UNKNOWN {

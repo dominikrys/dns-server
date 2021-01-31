@@ -2,6 +2,7 @@
 // TODO: maybe rename to "header"
 #[derive(Clone, Debug)]
 pub struct DnsHeader {
+    // TODO: do all these need to be pub?
     pub id: u16, // 16 bits
 
     pub response: bool,             // 1 bit

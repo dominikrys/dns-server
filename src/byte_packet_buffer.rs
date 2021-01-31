@@ -1,5 +1,6 @@
 // TODO: rename from BytePacketBuffer? Change buf and pos to full words?
 pub struct BytePacketBuffer {
+    // TODO: do all these need to be pub?
     pub buf: [u8; 512],
     pub pos: usize,
 }
@@ -78,7 +79,7 @@ impl BytePacketBuffer {
 
     // TODO: does self need to be mutable?
     // TODO: can just return the string and not output it in an input?
-    // TODO: rename from qname to something better. Maybe domain? Or query name?
+    // TODO: rename from qname to something better. Maybe domain? Or Question name?
     fn read_qname(&mut self, outstr: &mut String) -> Result<()> {
         let mut pos = self.pos(); // TODO: maybe make more obvious that this is local
 
