@@ -1,3 +1,11 @@
+use super::byte_packet_buffer::BytePacketBuffer;
+use super::dns_header::DnsHeader;
+use super::question::Question;
+use super::question_type::QuestionType;
+use super::resource_record::ResourceRecord;
+
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
 // TODO: do we need both these traits?
 #[derive(Clone, Debug)]
 // TODO: maybe rename to just "packet"?
@@ -13,7 +21,7 @@ pub struct DnsPacket {
 impl DnsPacket {
     pub fn new() -> Self {
         DnsPacket {
-            header: DnsJeader::new(),
+            header: DnsHeader::new(),
             questions: Vec::new(),
             answer_records: Vec::new(),
             authoritative_records: Vec::new(),
@@ -25,23 +33,23 @@ impl DnsPacket {
         let mut result = DnsPacket::new();
         result.header.read(buffer)?;
 
-        for _ in 0..result.header.questions {
+        for _ in 0..result.header.questions_total {
             let mut question = Question::new("".to_string(), QuestionType::UNKNOWN(0));
             question.read(buffer)?;
             result.questions.push(question);
         }
 
-        for _ in 0..result.header.answers {
+        for _ in 0..result.header.answer_rr_total {
             let record = ResourceRecord::read(buffer)?;
-            result.answers.push(record);
+            result.answer_records.push(record);
         }
-        for _ in 0..result.header.authoritative_entries {
+        for _ in 0..result.header.authoritative_rr_total {
             let record = ResourceRecord::read(buffer)?;
-            result.authorities.push(record);
+            result.authoritative_records.push(record);
         }
-        for _ in 0..result.header.resource_entries {
+        for _ in 0..result.header.additional_rr_total {
             let record = ResourceRecord::read(buffer)?;
-            result.resources.push(record);
+            result.additional_records.push(record);
         }
 
         Ok(result)

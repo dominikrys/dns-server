@@ -1,3 +1,8 @@
+use super::byte_packet_buffer::BytePacketBuffer;
+use super::question_type::QuestionType;
+
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Question {
     // TODO: do all these need to be pub?

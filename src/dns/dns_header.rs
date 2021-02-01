@@ -1,3 +1,8 @@
+use super::byte_packet_buffer::BytePacketBuffer;
+use super::return_code::ReturnCode;
+
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
 // Reference: http://www.networksorcery.com/enp/protocol/dns.htm
 // TODO: maybe rename to "header"
 #[derive(Clone, Debug)]
@@ -25,30 +30,33 @@ pub struct DnsHeader {
 
 impl DnsHeader {
     pub fn new() -> Self {
+        // TODO: maybe change to default instead: https://users.rust-lang.org/t/default-and-optional-parameter/27693/4
+        // TODO: Also check if this would be useful anywhere else in the code
         DnsHeader {
+            id: 0,
+
             response: false,
             opcode: 0,
             authoritative_answer: false,
             truncated_message: false,
             recursion_desired: false,
 
-            return_code: ReturnCode::NOERROR,
-            checking_disabled: false,
-            authenticated_data: false,
-            z: false,
             recursion_available: false,
+            z: false,
+            authenticated_data: false,
+            checking_disabled: false,
+            return_code: ReturnCode::NOERROR,
 
-            recursion_available: false,
-            z: false,
-            authenticated_data: false,
-            checking_disabled: false,
-            return_code: ReturnCode::NOERROR,
+            questions_total: 0,
+            answer_rr_total: 0,
+            authoritative_rr_total: 0,
+            additional_rr_total: 0,
         }
     }
 
     // TODO: rename this - this is more like creation from buffer
     // TODO: have a constructor for this, and not return an input
-    pub fn read(&mut self, &mut buffer: BytePacketBuffer) -> Result<()> {
+    pub fn read(&mut self, buffer: &mut BytePacketBuffer) -> Result<()> {
         // TODO: reset buffer pos?
         self.id = buffer.read_u16()?;
 

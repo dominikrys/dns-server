@@ -1,10 +1,17 @@
+use std::net::Ipv4Addr;
+
+use super::byte_packet_buffer::BytePacketBuffer;
+use super::question_type::QuestionType;
+
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
 // TODO: see if all these traits are needed
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-#[allow(dead_code)] // Maybe remove this
 pub enum ResourceRecord {
     // TODO: do we need an unknown record?
     // TODO: can we include the integer within these?
     // TODO: do we need a new enum for every record type?
+    // TODO: maybe implement this as a trait?
     // These are pretty generic and the header is the same for all: http://www.networksorcery.com/enp/protocol/dns.htm#Answer%20RRs
     UNKNOWN {
         domain: String,
@@ -14,13 +21,13 @@ pub enum ResourceRecord {
     }, // 0
     A {
         domain: String,
-        addr: Ipv4Addr,
+        ip_addr: Ipv4Addr,
         ttl: u32,
     }, // 1
 }
 
 impl ResourceRecord {
-    pub fn read(buffer: &mut BytePacketBuffer) -> Result<DnsRecord> {
+    pub fn read(buffer: &mut BytePacketBuffer) -> Result<ResourceRecord> {
         // TODO: this assumes that the bytepacketbuffer is at the start. Maybe reset it?
         let mut domain = String::new();
         buffer.read_qname(&mut domain)?;
@@ -44,16 +51,16 @@ impl ResourceRecord {
                 );
 
                 // TODO: can we not repeat this
-                Ok(DnsRecord::A {
-                    domain: domain,
-                    addr: addr,
-                    ttl: ttl,
+                Ok(ResourceRecord::A {
+                    domain,
+                    ip_addr,
+                    ttl,
                 })
             }
             QuestionType::UNKNOWN(_) => {
                 buffer.step(data_len as usize)?; // TODO: what's the point of this? To see if it returns a negative result?
 
-                Ok(DnsRecord::UNKNOWN {
+                Ok(ResourceRecord::UNKNOWN {
                     domain: domain,
                     qtype: qtype_num,
                     data_len: data_len,
