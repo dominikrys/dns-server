@@ -139,4 +139,62 @@ impl BytePacketBuffer {
 
         Ok(())
     }
+
+    // TODO: modify the things below with what we included for other bits
+    fn write(&mut self, val: u8) -> Result<()> {
+        if self.pos >= 512 {
+            return Err("End of buffer".into());
+        }
+
+        self.buf[self.pos] = val;
+        self.pos += 1;
+        Ok(())
+    }
+
+    // TODO: what is the point of this and write()? Could combine into one
+    fn write_u8(&mut self, val: u8) -> Result<()> {
+        self.write(val)?;
+
+        Ok(())
+    }
+
+    // TODO: have these next two functions reuse write_u8 and write_u16?
+    // TODO: Make this private?
+    pub fn write_u16(&mut self, val: u16) -> Result<()> {
+        self.write((val >> 8) as u8)?;
+        self.write((val & 0xFF) as u8)?;
+
+        Ok(())
+    }
+
+    fn write_u32(&mut self, val: u32) -> Result<()> {
+        self.write(((val >> 24) & 0xFF) as u8)?; // TODO: do we need the `& 0xFF` here?
+        self.write(((val >> 16) & 0xFF) as u8)?;
+        self.write(((val >> 8) & 0xFF) as u8)?;
+        self.write((val & 0xFF) as u8)?;
+
+        Ok(())
+    }
+
+    // TODO: should this be public?
+    pub fn write_qname(&mut self, qname: &str) -> Result<()> {
+        for label in qname.split('.') {
+            let len = label.len();
+            if len > 63 {
+                return Err("Single label exceeds 63 characters of length".into());
+                // TODO: should we restore the whole buffer in this case?
+            }
+
+            self.write_u8(len as u8)?;
+            for b in label.as_bytes() {
+                // TODO: can we avoid the * here and instead use a reference?
+                self.write_u8(*b)?;
+            }
+        }
+
+        // Null terminate the name
+        self.write_u8(0)?;
+
+        Ok(())
+    }
 }

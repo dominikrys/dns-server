@@ -4,6 +4,7 @@
 
 - finish implementation + compare
 - go through todos
+- remove dns\_\* from files. We know it's DNS.
 - refactor + naming
   - no side effects
   - unambigous names

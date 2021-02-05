@@ -33,6 +33,7 @@ impl DnsPacket {
         let mut result = DnsPacket::new();
         result.header.read(buffer)?;
 
+        // TODO: can we tidy this repetition?
         for _ in 0..result.header.questions_total {
             let mut question = Question::new("".to_string(), QuestionType::UNKNOWN(0));
             question.read(buffer)?;

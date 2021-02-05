@@ -55,31 +55,60 @@ impl DnsHeader {
     }
 
     // TODO: rename this - this is more like creation from buffer
-    // TODO: have a constructor for this, and not return an input
+    // TODO: have flags_half_1 constructor for this, and not return an input
     pub fn read(&mut self, buffer: &mut BytePacketBuffer) -> Result<()> {
         // TODO: reset buffer pos?
         self.id = buffer.read_u16()?;
 
         let flags = buffer.read_u16()?;
-        let a = (flags >> 8) as u8; // TODO: rename to higher bits
-        let b = (flags & 0xFF) as u8; // TODO: Rename to lower bits
+        let flags_half_1 = (flags >> 8) as u8;
+        let flags_half_2 = (flags & 0xFF) as u8;
 
-        self.response = (a & (1 << 7)) > 0;
-        self.opcode = (a >> 3) & 0x0F; // TODO: can we instead shift 0x0F?
-        self.authoritative_answer = (a & (1 << 2)) > 0;
-        self.truncated_message = (a & (1 << 1)) > 0;
-        self.recursion_desired = (a & 1) > 0;
+        self.response = (flags_half_1 & (1 << 7)) > 0;
+        self.opcode = (flags_half_1 >> 3) & 0x0F; // TODO: can we instead shift 0x0F?
+        self.authoritative_answer = (flags_half_1 & (1 << 2)) > 0;
+        self.truncated_message = (flags_half_1 & (1 << 1)) > 0;
+        self.recursion_desired = (flags_half_1 & 1) > 0;
 
-        self.recursion_available = (b & (1 << 7)) > 0;
-        self.z = (b & (1 << 6)) > 0;
-        self.authenticated_data = (b & (1 << 5)) > 0;
-        self.checking_disabled = (b & (1 << 4)) > 0;
-        self.return_code = ReturnCode::from_num(b & 0x0F);
+        self.recursion_available = (flags_half_2 & (1 << 7)) > 0;
+        self.z = (flags_half_2 & (1 << 6)) > 0;
+        self.authenticated_data = (flags_half_2 & (1 << 5)) > 0;
+        self.checking_disabled = (flags_half_2 & (1 << 4)) > 0;
+        self.return_code = ReturnCode::from_num(flags_half_2 & 0x0F);
 
         self.questions_total = buffer.read_u16()?;
         self.answer_rr_total = buffer.read_u16()?;
         self.authoritative_rr_total = buffer.read_u16()?;
         self.additional_rr_total = buffer.read_u16()?;
+
+        Ok(())
+    }
+
+    // TODO: return the buffer and dont take it as an argument!
+    pub fn write(&self, buffer: &mut BytePacketBuffer) -> Result<()> {
+        buffer.write_u16(self.id)?;
+
+        // TODO: make this and the other bit manipulations more legible?
+        let flags_half_1 = (((self.response as u8) << 7)
+            | (self.opcode << 3)
+            | ((self.authoritative_answer as u8) << 2)
+            | ((self.truncated_message as u8) << 1)
+            | (self.recursion_desired as u8)) as u8;
+
+        buffer.write_u8(flags_half_1)?;
+
+        let flags_half_2 = (((self.recursion_available as u8) << 7)
+            | ((self.z as u8) << 6)
+            | ((self.authenticated_data as u8) << 5)
+            | ((self.checking_disabled as u8) << 4)
+            | (self.return_code as u8)) as u8;
+
+        buffer.write_u8(flags_half_2)?;
+
+        buffer.write_u16(self.questions_total)?;
+        buffer.write_u16(self.answer_rr_total)?;
+        buffer.write_u16(self.authoritative_rr_total)?;
+        buffer.write_u16(self.additional_rr_total)?;
 
         Ok(())
     }
