@@ -15,7 +15,8 @@ impl BytePacketBuffer {
         }
     }
 
-    fn pos(&self) -> usize {
+    // TODO: make private? Or look into Rust scope
+    pub fn pos(&self) -> usize {
         self.pos
     }
 
@@ -52,6 +53,7 @@ impl BytePacketBuffer {
         if pos >= 512 {
             return Err("End of buffer".into());
         }
+
         Ok(self.buf[pos])
     }
 
@@ -152,7 +154,8 @@ impl BytePacketBuffer {
     }
 
     // TODO: what is the point of this and write()? Could combine into one
-    fn write_u8(&mut self, val: u8) -> Result<()> {
+    // TODO: make private
+    pub fn write_u8(&mut self, val: u8) -> Result<()> {
         self.write(val)?;
 
         Ok(())
@@ -167,7 +170,8 @@ impl BytePacketBuffer {
         Ok(())
     }
 
-    fn write_u32(&mut self, val: u32) -> Result<()> {
+    // TODO: make private?
+    pub fn write_u32(&mut self, val: u32) -> Result<()> {
         self.write(((val >> 24) & 0xFF) as u8)?; // TODO: do we need the `& 0xFF` here?
         self.write(((val >> 16) & 0xFF) as u8)?;
         self.write(((val >> 8) & 0xFF) as u8)?;

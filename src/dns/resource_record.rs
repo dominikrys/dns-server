@@ -1,7 +1,7 @@
 use std::net::Ipv4Addr;
 
-use super::byte_packet_buffer::BytePacketBuffer;
 use super::question_type::QuestionType;
+use super::{byte_packet_buffer::BytePacketBuffer, question::Question};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -68,5 +68,36 @@ impl ResourceRecord {
                 })
             }
         }
+    }
+
+    pub fn write(&self, buffer: &mut BytePacketBuffer) -> Result<usize> {
+        let start_pos = buffer.pos();
+
+        // TODO: see if i can tidy this a bit
+        match *self {
+            ResourceRecord::A {
+                ref domain,
+                ref ip_addr,
+                ttl,
+            } => {
+                buffer.write_qname(domain)?;
+                buffer.write_u16(QuestionType::A.to_num())?;
+                buffer.write_u16(1)?;
+                buffer.write_u32(ttl)?;
+                buffer.write_u16(4)?;
+
+                let octets = ip_addr.octets();
+                buffer.write_u8(octets[0])?;
+                buffer.write_u8(octets[1])?;
+                buffer.write_u8(octets[2])?;
+                buffer.write_u8(octets[3])?;
+            }
+            ResourceRecord::UNKNOWN { .. } => {
+                println!("Skipping unknown record: {:?}", self);
+            }
+        }
+
+        // TODO: why are we returning the size?
+        Ok(buffer.pos() - start_pos)
     }
 }
