@@ -1,6 +1,4 @@
 use std::error::Error;
-use std::fs::File;
-use std::io::Read;
 use std::net::UdpSocket;
 
 mod dns;
@@ -16,7 +14,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Query A record for google.com
     let qname = "google.com";
-    let qtype = QuestionType::A;
+    let qtype = QuestionType::NS;
 
     // Configure request packet
     let mut packet = DnsPacket::new();

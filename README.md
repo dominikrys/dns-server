@@ -3,11 +3,11 @@
 ## TODO
 
 - finish implementation + compare
-- go through todos
+- go through TODOs
 - remove dns\_\* from files. We know it's DNS.
 - refactor + naming
   - no side effects
-  - unambigous names
+  - unambiguous names
   - add comments if really necessary
 - sort out directory structure
 - add tests?
@@ -20,3 +20,5 @@
   - should we include more stuff in one file?
     - alternatively, is there a way to reduce the amount of `use super::*`?
     - maybe use [`pub use`](https://www.reddit.com/r/rust/comments/6x49mu/what_are_some_rules_of_thumb_for_use/dmd07yr?utm_source=share&utm_medium=web2x&context=3)?
+- sort out all warnings
+- Add SOA
