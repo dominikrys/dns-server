@@ -7,16 +7,13 @@ use dns::byte_packet_buffer::BytePacketBuffer;
 use dns::dns_packet::DnsPacket;
 use dns::question::Question;
 use dns::question_type::QuestionType;
-fn main() -> Result<(), Box<dyn Error>> {
-    // Connect to Google's DNS
+use dns::return_code::ReturnCode;
+
+fn lookup(qname: &str, qtype: QuestionType) -> Result<DnsPacket, Box<dyn Error>> {
+    // Forward queries to Google's public DNS
     let server = ("8.8.8.8", 53);
     let socket = UdpSocket::bind(("0.0.0.0", 43210))?;
 
-    // Query A record for google.com
-    let qname = "google.com";
-    let qtype = QuestionType::NS;
-
-    // Configure request packet
     let mut packet = DnsPacket::new();
 
     packet.header.id = 1234;
@@ -28,29 +25,74 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut req_buffer = BytePacketBuffer::new();
     packet.write(&mut req_buffer)?;
-
-    // Perform the query
     socket.send_to(&req_buffer.buf[0..req_buffer.pos], server)?;
 
-    // Get the answer
-    let mut answer_buffer = BytePacketBuffer::new();
-    socket.recv_from(&mut answer_buffer.buf)?;
+    let mut res_buffer = BytePacketBuffer::new();
+    socket.recv_from(&mut res_buffer.buf)?;
 
-    let answer_packet = DnsPacket::from_buffer(&mut answer_buffer)?;
-    println!("{:#?}", answer_packet.header);
+    DnsPacket::from_buffer(&mut res_buffer)
+}
 
-    for q in answer_packet.questions {
-        println!("{:#?}", q);
+fn handle_query(socket: &UdpSocket) -> Result<(), Box<dyn Error>> {
+    // Blocks until a reply is received
+    let mut req_buffer = BytePacketBuffer::new();
+
+    let (_, src) = socket.recv_from(&mut req_buffer.buf)?;
+    let mut request = DnsPacket::from_buffer(&mut req_buffer)?;
+
+    let mut packet = DnsPacket::new();
+    packet.header.id = request.header.id;
+    packet.header.recursion_desired = true;
+    packet.header.recursion_available = true;
+    packet.header.response = true;
+
+    // Only get one question TODO: support more
+    if let Some(question) = request.questions.pop() {
+        println!("Received query: {:?}", question);
+
+        if let Ok(result) = lookup(&question.name, question.qtype) {
+            packet.questions.push(question);
+            packet.header.return_code = result.header.return_code;
+
+            for rec in result.answer_records {
+                println!("Answer: {:?}", rec);
+                packet.answer_records.push(rec);
+            }
+            for rec in result.authoritative_records {
+                println!("Authority: {:?}", rec);
+                packet.authoritative_records.push(rec);
+            }
+            for rec in result.additional_records {
+                println!("Resource: {:?}", rec);
+                packet.additional_records.push(rec);
+            }
+        } else {
+            packet.header.return_code = ReturnCode::SERVFAIL;
+        }
+    } else {
+        packet.header.return_code = ReturnCode::FORMERR;
     }
-    for rec in answer_packet.answer_records {
-        println!("{:#?}", rec);
-    }
-    for rec in answer_packet.authoritative_records {
-        println!("{:#?}", rec);
-    }
-    for rec in answer_packet.additional_records {
-        println!("{:#?}", rec);
-    }
+
+    let mut res_buffer = BytePacketBuffer::new();
+    packet.write(&mut res_buffer)?;
+
+    // TODO: maybe we can add a "get_size" function?
+    let len = res_buffer.pos();
+    let data = res_buffer.get_range(0, len)?;
+
+    socket.send_to(data, src)?;
 
     Ok(())
+}
+
+fn main() -> Result<(), Box<dyn Error>> {
+    let socket = UdpSocket::bind(("0.0.0.0", 2053))?;
+
+    // TODO: don't make an infinite loop
+    loop {
+        match handle_query(&socket) {
+            Ok(_) => {}
+            Err(e) => eprintln!("An error occurred: {}", e),
+        }
+    }
 }

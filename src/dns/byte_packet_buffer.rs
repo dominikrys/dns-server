@@ -58,7 +58,8 @@ impl BytePacketBuffer {
     }
 
     // TODO: does self need to be mutable?
-    fn get_range(&mut self, start: usize, len: usize) -> Result<&[u8]> {
+    // TODO: make this private?
+    pub fn get_range(&mut self, start: usize, len: usize) -> Result<&[u8]> {
         // TODO: maybe refactor this range check
         if start + len >= 512 {
             return Err("End of buffer".into());
