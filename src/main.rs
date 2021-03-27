@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::net::Ipv4Addr;
 use std::net::UdpSocket;
 
 mod dns;
@@ -9,9 +9,10 @@ use dns::question::Question;
 use dns::question_type::QuestionType;
 use dns::return_code::ReturnCode;
 
-fn lookup(qname: &str, qtype: QuestionType) -> Result<DnsPacket, Box<dyn Error>> {
-    // Forward queries to Google's public DNS
-    let server = ("8.8.8.8", 53);
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
+// TODO: remove this stuff from main?
+fn lookup(qname: &str, qtype: QuestionType, server: (Ipv4Addr, u16)) -> Result<DnsPacket> {
     let socket = UdpSocket::bind(("0.0.0.0", 43210))?;
 
     let mut packet = DnsPacket::new();
@@ -33,7 +34,46 @@ fn lookup(qname: &str, qtype: QuestionType) -> Result<DnsPacket, Box<dyn Error>>
     DnsPacket::from_buffer(&mut res_buffer)
 }
 
-fn handle_query(socket: &UdpSocket) -> Result<(), Box<dyn Error>> {
+fn recursive_lookup(qname: &str, qtype: QuestionType) -> Result<DnsPacket> {
+    // TODO: remove this hardcoded IP
+    // For now we're always starting with *a.root-servers.net*.
+    let mut ns = "198.41.0.4".parse::<Ipv4Addr>().unwrap();
+
+    loop {
+        println!("Performing lookup of {:?} {} with ns {}", qtype, qname, ns);
+
+        let server = (ns.clone(), 53);
+        let response = lookup(qname, qtype, server)?;
+
+        // TODO: can we combine these into a match?
+        if !response.answer_records.is_empty() && response.header.return_code == ReturnCode::NOERROR
+        {
+            return Ok(response);
+        }
+
+        if response.header.return_code == ReturnCode::NXDOMAIN {
+            return Ok(response);
+        }
+
+        // Resolve IP of an NS record
+        let new_ns_host = match response.get_nameserver_host(qname) {
+            Some(x) => x,
+            None => return Ok(response),
+        };
+
+        let recursive_response = recursive_lookup(&new_ns_host, QuestionType::A)?;
+
+        // Finally, we pick a random ip from the result, and restart the loop. If no such
+        // record is available, we again return the last result we got.
+        if let Some(new_ns) = recursive_response.get_first_a_record() {
+            ns = new_ns;
+        } else {
+            return Ok(response);
+        }
+    }
+}
+
+fn handle_query(socket: &UdpSocket) -> Result<()> {
     // Blocks until a reply is received
     let mut req_buffer = BytePacketBuffer::new();
 
@@ -50,7 +90,7 @@ fn handle_query(socket: &UdpSocket) -> Result<(), Box<dyn Error>> {
     if let Some(question) = request.questions.pop() {
         println!("Received query: {:?}", question);
 
-        if let Ok(result) = lookup(&question.name, question.qtype) {
+        if let Ok(result) = recursive_lookup(&question.name, question.qtype) {
             packet.questions.push(question);
             packet.header.return_code = result.header.return_code;
 
@@ -85,7 +125,7 @@ fn handle_query(socket: &UdpSocket) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<()> {
     let socket = UdpSocket::bind(("0.0.0.0", 2053))?;
 
     // TODO: don't make an infinite loop

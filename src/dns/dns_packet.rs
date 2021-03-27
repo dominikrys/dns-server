@@ -1,3 +1,5 @@
+use std::net::Ipv4Addr;
+
 use super::byte_packet_buffer::BytePacketBuffer;
 use super::dns_header::DnsHeader;
 use super::question::Question;
@@ -8,7 +10,7 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 // TODO: do we need both these traits?
 #[derive(Clone, Debug)]
-// TODO: maybe rename to just "packet"?
+// TODO: maybe rename to just "packet"? and the other _dns stuff. Redundant since inside "DNS" module?
 pub struct DnsPacket {
     // TODO: should these all be pub?
     pub header: DnsHeader,
@@ -80,5 +82,36 @@ impl DnsPacket {
         }
 
         Ok(())
+    }
+
+    pub fn get_first_a_record(&self) -> Option<Ipv4Addr> {
+        self.answer_records
+            .iter()
+            .filter_map(|record| match record {
+                ResourceRecord::A { ip_addr, .. } => Some(*ip_addr),
+                _ => None,
+            })
+            .next()
+    }
+
+    // TODO: make return type obvious that they're a domain and host
+    fn get_nameservers<'a>(&'a self, qname: &'a str) -> impl Iterator<Item = (&'a str, &'a str)> {
+        self.authoritative_records
+            .iter()
+            .filter_map(|record| match record {
+                ResourceRecord::NS { domain, host, .. } => Some((domain.as_str(), host.as_str())),
+                _ => None,
+            })
+            // Discard servers which aren't authoritative to our query
+            // TODO: make this cleaner
+            .filter(move |(domain, _)| qname.ends_with(*domain))
+    }
+
+    // TODO: rename this method 
+    pub fn get_nameserver_host<'a>(&'a self, qname: &'a str) -> Option<&'a str> {
+        // Get the first valid entry. Don't use additional section
+        // TODO: implement out of bailiwick check: https://www.farsightsecurity.com/blog/txt-record/what-is-a-bailiwick-20170321
+        // TODO: tidy this
+        self.get_nameservers(qname).map(|(_, host)| host).next()
     }
 }

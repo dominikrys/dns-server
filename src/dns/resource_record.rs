@@ -27,7 +27,7 @@ pub enum ResourceRecord {
     }, // 1
     NS {
         domain: String,
-        nameserver: String,
+        host: String,
         ttl: u32,
     }, // 2,
     CNAME {
@@ -102,12 +102,12 @@ impl ResourceRecord {
                 })
             }
             QuestionType::NS => {
-                let mut nameserver = String::new();
-                buffer.read_qname(&mut nameserver)?;
+                let mut host = String::new();
+                buffer.read_qname(&mut host)?;
 
                 Ok(ResourceRecord::NS {
                     domain,
-                    nameserver,
+                    host,
                     ttl,
                 })
             }
@@ -167,7 +167,7 @@ impl ResourceRecord {
             }
             ResourceRecord::NS {
                 ref domain,
-                ref nameserver,
+                ref host,
                 ttl,
             } => {
                 // TODO: lots of this is common. Can we compress it?
@@ -181,7 +181,7 @@ impl ResourceRecord {
                 let pos = buffer.pos();
                 buffer.write_u16(0)?;
 
-                buffer.write_qname(nameserver)?;
+                buffer.write_qname(host)?;
 
                 let size = buffer.pos() - (pos - 2);
                 buffer.set_u16(pos, size as u16)?;
