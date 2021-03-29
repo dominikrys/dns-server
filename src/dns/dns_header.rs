@@ -85,7 +85,7 @@ impl DnsHeader {
     }
 
     // TODO: return the buffer and dont take it as an argument!
-    pub fn write_u8(&self, buffer: &mut PacketBuffer) -> Result<()> {
+    pub fn write(&self, buffer: &mut PacketBuffer) -> Result<()> {
         buffer.write_u16(self.id)?;
 
         // TODO: make this and the other bit manipulations more legible?

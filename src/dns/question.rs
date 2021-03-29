@@ -27,7 +27,7 @@ impl Question {
     }
 
     // TODO: return the buffer
-    pub fn write_u8(&self, buffer: &mut PacketBuffer) -> Result<()> {
+    pub fn write(&self, buffer: &mut PacketBuffer) -> Result<()> {
         buffer.write_qname(&self.name)?;
 
         let type_num = self.qtype.to_num();

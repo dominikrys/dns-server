@@ -3,7 +3,7 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 const BUF_SIZE: usize = 512;
 pub struct PacketBuffer {
     pub buf: [u8; BUF_SIZE],
-    pub pos: usize,
+    pos: usize,
 }
 
 impl PacketBuffer {
@@ -40,7 +40,6 @@ impl PacketBuffer {
         Ok(self.buf[pos])
     }
 
-    // TODO: make this private?
     pub fn get_range(&self, start: usize, len: usize) -> Result<&[u8]> {
         self.check_end_of_buffer(start + len)?;
 

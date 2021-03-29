@@ -27,8 +27,8 @@ fn lookup(qname: &str, qtype: QuestionType, server: (Ipv4Addr, u16)) -> Result<D
         .push(Question::new(qname.to_string(), qtype));
 
     let mut req_buffer = PacketBuffer::new();
-    packet.write_u8(&mut req_buffer)?;
-    socket.send_to(&req_buffer.buf[0..req_buffer.pos], server)?;
+    packet.write(&mut req_buffer)?;
+    socket.send_to(&req_buffer.buf[0..req_buffer.pos()], server)?;
 
     let mut res_buffer = PacketBuffer::new();
     socket.recv_from(&mut res_buffer.buf)?;
@@ -121,12 +121,10 @@ fn handle_query(socket: &UdpSocket) -> Result<()> {
     }
 
     let mut res_buffer = PacketBuffer::new();
-    packet.write_u8(&mut res_buffer)?;
+    packet.write(&mut res_buffer)?;
 
-    // TODO: maybe we can add a "get_size" function?
     let len = res_buffer.pos();
     let data = res_buffer.get_range(0, len)?;
-
     socket.send_to(data, src)?;
 
     Ok(())

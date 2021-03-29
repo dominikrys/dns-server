@@ -60,25 +60,25 @@ impl DnsPacket {
 
     // TODO: does self need to be mut?
     // TODO: should this return buffer ot take it in as a reference?
-    pub fn write_u8(&mut self, buffer: &mut PacketBuffer) -> Result<()> {
+    pub fn write(&mut self, buffer: &mut PacketBuffer) -> Result<()> {
         self.header.questions_total = self.questions.len() as u16;
         self.header.answer_rr_total = self.answer_records.len() as u16;
         self.header.authoritative_rr_total = self.authoritative_records.len() as u16;
         self.header.additional_rr_total = self.additional_records.len() as u16;
 
-        self.header.write_u8(buffer)?;
+        self.header.write(buffer)?;
 
         for question in &self.questions {
-            question.write_u8(buffer)?;
+            question.write(buffer)?;
         }
         for rec in &self.answer_records {
-            rec.write_u8(buffer)?;
+            rec.write(buffer)?;
         }
         for rec in &self.authoritative_records {
-            rec.write_u8(buffer)?;
+            rec.write(buffer)?;
         }
         for rec in &self.additional_records {
-            rec.write_u8(buffer)?;
+            rec.write(buffer)?;
         }
 
         Ok(())

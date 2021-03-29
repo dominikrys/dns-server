@@ -139,7 +139,7 @@ impl ResourceRecord {
         }
     }
 
-    pub fn write_u8(&self, buffer: &mut PacketBuffer) -> Result<usize> {
+    pub fn write(&self, buffer: &mut PacketBuffer) -> Result<usize> {
         let start_pos = buffer.pos();
 
         // TODO: see if i can tidy this a bit
