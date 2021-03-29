@@ -1,28 +1,23 @@
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 const BUF_SIZE: usize = 512;
-
-// TODO: rename from BytePacketBuffer? Change buf and pos to full words?
-pub struct BytePacketBuffer {
-    // TODO: do all these need to be pub?
+pub struct PacketBuffer {
     pub buf: [u8; BUF_SIZE],
     pub pos: usize,
 }
 
-impl BytePacketBuffer {
+impl PacketBuffer {
     pub fn new() -> Self {
-        BytePacketBuffer {
+        PacketBuffer {
             buf: [0; BUF_SIZE],
             pos: 0,
         }
     }
 
-    // TODO: make private? Or look into Rust scope
     pub fn pos(&self) -> usize {
         self.pos
     }
 
-    // TODO: remove pub
     pub fn step(&mut self, steps: usize) {
         self.pos += steps;
     }

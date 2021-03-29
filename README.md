@@ -1,5 +1,7 @@
 # DNS Server
 
+[![Build Status](https://img.shields.io/github/workflow/status/dominikrys/dns-server/ci?style=flat-square)](https://github.com/dominikrys/dns-server/actions)
+
 Rudimentary DNS server in Rust. Based off [Emil Hernvall's DNS guide](https://github.com/EmilHernvall/dnsguide).
 
 ## Build Instructions
@@ -49,3 +51,4 @@ dig @127.0.0.1 -p 2053 www.google.com
   - Host our own zones? Allow to act a authoritative server?
   - DNSSEC?
   - Add SOA records?
+- make public, put featured on profile, make sure badge shows up

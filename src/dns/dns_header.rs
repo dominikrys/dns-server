@@ -1,4 +1,4 @@
-use super::byte_packet_buffer::BytePacketBuffer;
+use super::byte_packet_buffer::PacketBuffer;
 use super::return_code::ReturnCode;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -56,7 +56,7 @@ impl DnsHeader {
 
     // TODO: rename this - this is more like creation from buffer
     // TODO: have flags_half_1 constructor for this, and not return an input
-    pub fn read(&mut self, buffer: &mut BytePacketBuffer) -> Result<()> {
+    pub fn read(&mut self, buffer: &mut PacketBuffer) -> Result<()> {
         // TODO: reset buffer pos?
         self.id = buffer.read_u16()?;
 
@@ -85,7 +85,7 @@ impl DnsHeader {
     }
 
     // TODO: return the buffer and dont take it as an argument!
-    pub fn write(&self, buffer: &mut BytePacketBuffer) -> Result<()> {
+    pub fn write(&self, buffer: &mut PacketBuffer) -> Result<()> {
         buffer.write_u16(self.id)?;
 
         // TODO: make this and the other bit manipulations more legible?

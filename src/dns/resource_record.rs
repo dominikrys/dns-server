@@ -1,7 +1,7 @@
 use std::net::Ipv4Addr;
 use std::net::Ipv6Addr;
 
-use super::byte_packet_buffer::BytePacketBuffer;
+use super::byte_packet_buffer::PacketBuffer;
 use super::question_type::QuestionType;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -49,8 +49,8 @@ pub enum ResourceRecord {
 }
 
 impl ResourceRecord {
-    pub fn read(buffer: &mut BytePacketBuffer) -> Result<ResourceRecord> {
-        // TODO: this assumes that the bytepacketbuffer is at the start. Maybe reset it?
+    pub fn read(buffer: &mut PacketBuffer) -> Result<ResourceRecord> {
+        // TODO: this assumes that the PacketBuffer is at the start. Maybe reset it?
         let mut domain = String::new();
         buffer.read_qname(&mut domain)?;
 
@@ -139,7 +139,7 @@ impl ResourceRecord {
         }
     }
 
-    pub fn write(&self, buffer: &mut BytePacketBuffer) -> Result<usize> {
+    pub fn write(&self, buffer: &mut PacketBuffer) -> Result<usize> {
         let start_pos = buffer.pos();
 
         // TODO: see if i can tidy this a bit

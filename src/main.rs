@@ -5,7 +5,7 @@ use std::net::UdpSocket;
 
 mod dns;
 
-use dns::byte_packet_buffer::BytePacketBuffer;
+use dns::byte_packet_buffer::PacketBuffer;
 use dns::dns_packet::DnsPacket;
 use dns::question::Question;
 use dns::question_type::QuestionType;
@@ -26,11 +26,11 @@ fn lookup(qname: &str, qtype: QuestionType, server: (Ipv4Addr, u16)) -> Result<D
         .questions
         .push(Question::new(qname.to_string(), qtype));
 
-    let mut req_buffer = BytePacketBuffer::new();
+    let mut req_buffer = PacketBuffer::new();
     packet.write(&mut req_buffer)?;
     socket.send_to(&req_buffer.buf[0..req_buffer.pos], server)?;
 
-    let mut res_buffer = BytePacketBuffer::new();
+    let mut res_buffer = PacketBuffer::new();
     socket.recv_from(&mut res_buffer.buf)?;
 
     DnsPacket::from_buffer(&mut res_buffer)
@@ -83,7 +83,7 @@ fn recursive_lookup(qname: &str, qtype: QuestionType) -> Result<DnsPacket> {
 
 fn handle_query(socket: &UdpSocket) -> Result<()> {
     // Blocks until a reply is received
-    let mut req_buffer = BytePacketBuffer::new();
+    let mut req_buffer = PacketBuffer::new();
     let (_, src) = socket.recv_from(&mut req_buffer.buf)?;
     let mut request = DnsPacket::from_buffer(&mut req_buffer)?;
 
@@ -120,7 +120,7 @@ fn handle_query(socket: &UdpSocket) -> Result<()> {
         packet.header.return_code = ReturnCode::FORMERR;
     }
 
-    let mut res_buffer = BytePacketBuffer::new();
+    let mut res_buffer = PacketBuffer::new();
     packet.write(&mut res_buffer)?;
 
     // TODO: maybe we can add a "get_size" function?

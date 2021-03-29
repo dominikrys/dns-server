@@ -1,6 +1,6 @@
 use std::net::Ipv4Addr;
 
-use super::byte_packet_buffer::BytePacketBuffer;
+use super::byte_packet_buffer::PacketBuffer;
 use super::dns_header::DnsHeader;
 use super::question::Question;
 use super::question_type::QuestionType;
@@ -31,7 +31,7 @@ impl DnsPacket {
         }
     }
 
-    pub fn from_buffer(buffer: &mut BytePacketBuffer) -> Result<DnsPacket> {
+    pub fn from_buffer(buffer: &mut PacketBuffer) -> Result<DnsPacket> {
         let mut result = DnsPacket::new();
         result.header.read(buffer)?;
 
@@ -60,7 +60,7 @@ impl DnsPacket {
 
     // TODO: does self need to be mut?
     // TODO: should this return buffer ot take it in as a reference?
-    pub fn write(&mut self, buffer: &mut BytePacketBuffer) -> Result<()> {
+    pub fn write(&mut self, buffer: &mut PacketBuffer) -> Result<()> {
         self.header.questions_total = self.questions.len() as u16;
         self.header.answer_rr_total = self.answer_records.len() as u16;
         self.header.authoritative_rr_total = self.authoritative_records.len() as u16;
