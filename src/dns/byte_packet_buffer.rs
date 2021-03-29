@@ -26,7 +26,7 @@ impl PacketBuffer {
         self.pos = pos;
     }
 
-    fn check_end_of_buffer(&mut self, pos: usize) -> Result<()> {
+    fn check_end_of_buffer(&self, pos: usize) -> Result<()> {
         if pos >= self.buf.len() {
             return Err("End of buffer".into());
         }
@@ -34,17 +34,14 @@ impl PacketBuffer {
         Ok(())
     }
 
-    // TODO: does self need to be mutable?
-    // TODO: do we need to specify pos or can we just return the current position?
-    fn get(&mut self, pos: usize) -> Result<u8> {
+    fn get(&self, pos: usize) -> Result<u8> {
         self.check_end_of_buffer(pos)?;
 
         Ok(self.buf[pos])
     }
 
-    // TODO: does self need to be mutable?
     // TODO: make this private?
-    pub fn get_range(&mut self, start: usize, len: usize) -> Result<&[u8]> {
+    pub fn get_range(&self, start: usize, len: usize) -> Result<&[u8]> {
         self.check_end_of_buffer(start + len)?;
 
         Ok(&self.buf[start..start + len as usize])
@@ -57,7 +54,6 @@ impl PacketBuffer {
         Ok(res)
     }
 
-    // TODO: does self need to be mutable?
     // TODO: remove pub
     // TODO: abstract reading and writing the parts of the byte?
     pub fn read_u16(&mut self) -> Result<u16> {

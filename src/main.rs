@@ -133,7 +133,11 @@ fn handle_query(socket: &UdpSocket) -> Result<()> {
 }
 
 fn main() -> Result<()> {
-    let socket = UdpSocket::bind(("0.0.0.0", 2053))?;
+    // TODO: add option to choose port to bind to
+    let port = 2053;
+    let socket = UdpSocket::bind(("0.0.0.0", port))?;
+
+    println!("=== DNS server listening on port {} ===", port);
 
     // TODO: don't make an infinite loop
     loop {
