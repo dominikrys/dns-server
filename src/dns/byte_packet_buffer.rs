@@ -205,7 +205,7 @@ impl BytePacketBuffer {
 
     // TODO: maybe change this to set_u8?
     fn set(&mut self, pos: usize, val: u8) -> Result<()> {
-        self.buf[pos] = val;
+        self.buf[pos] = val; // TODO: this could overflow, return an error.
 
         Ok(())
     }

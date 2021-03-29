@@ -123,7 +123,7 @@ impl DnsPacket {
                         _ => None,
                     })
             })
-            .map(|addr| *addr)
+            .cloned()
             // TODO: can we use something else than .next()?
             .next()
     }

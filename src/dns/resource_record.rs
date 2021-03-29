@@ -68,7 +68,7 @@ impl ResourceRecord {
                     ((raw_ip_addr >> 24) & 0xFF) as u8,
                     ((raw_ip_addr >> 16) & 0xFF) as u8,
                     ((raw_ip_addr >> 8) & 0xFF) as u8,
-                    ((raw_ip_addr >> 0) & 0xFF) as u8,
+                    (raw_ip_addr & 0xFF) as u8,
                 );
 
                 // TODO: can we not repeat this
@@ -86,13 +86,13 @@ impl ResourceRecord {
 
                 let ip_addr = Ipv6Addr::new(
                     ((raw_ip_addr1 >> 16) & 0xFFFF) as u16,
-                    ((raw_ip_addr1 >> 0) & 0xFFFF) as u16,
+                    (raw_ip_addr1 & 0xFFFF) as u16,
                     ((raw_ip_addr2 >> 16) & 0xFFFF) as u16,
-                    ((raw_ip_addr2 >> 0) & 0xFFFF) as u16,
+                    (raw_ip_addr2 & 0xFFFF) as u16,
                     ((raw_ip_addr3 >> 16) & 0xFFFF) as u16,
-                    ((raw_ip_addr3 >> 0) & 0xFFFF) as u16,
+                    (raw_ip_addr3 & 0xFFFF) as u16,
                     ((raw_ip_addr4 >> 16) & 0xFFFF) as u16,
-                    ((raw_ip_addr4 >> 0) & 0xFFFF) as u16,
+                    (raw_ip_addr4 & 0xFFFF) as u16,
                 );
 
                 Ok(ResourceRecord::AAAA {
@@ -130,10 +130,10 @@ impl ResourceRecord {
                 buffer.step(data_len as usize)?; // TODO: what's the point of this? To see if it returns a negative result?
 
                 Ok(ResourceRecord::UNKNOWN {
-                    domain: domain,
+                    domain,
                     qtype: qtype_num,
-                    data_len: data_len,
-                    ttl: ttl,
+                    data_len,
+                    ttl,
                 })
             }
         }

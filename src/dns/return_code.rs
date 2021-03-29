@@ -19,7 +19,7 @@ impl ReturnCode {
             3 => ReturnCode::NXDOMAIN,
             4 => ReturnCode::NOTIMP,
             5 => ReturnCode::REFUSED,
-            0 | _ => ReturnCode::NOERROR,
+            _ => ReturnCode::NOERROR,
         }
     }
 }
