@@ -49,7 +49,7 @@ pub enum ResourceRecord {
 }
 
 impl ResourceRecord {
-    pub fn read(buffer: &mut PacketBuffer) -> Result<ResourceRecord> {
+    pub fn read_u8(buffer: &mut PacketBuffer) -> Result<ResourceRecord> {
         // TODO: this assumes that the PacketBuffer is at the start. Maybe reset it?
         let mut domain = String::new();
         buffer.read_qname(&mut domain)?;
@@ -139,7 +139,7 @@ impl ResourceRecord {
         }
     }
 
-    pub fn write(&self, buffer: &mut PacketBuffer) -> Result<usize> {
+    pub fn write_u8(&self, buffer: &mut PacketBuffer) -> Result<usize> {
         let start_pos = buffer.pos();
 
         // TODO: see if i can tidy this a bit
@@ -180,7 +180,8 @@ impl ResourceRecord {
                 buffer.write_qname(host)?;
 
                 let size = buffer.pos() - (pos - 2);
-                buffer.set_u16(pos, size as u16)?;
+                buffer.seek(pos);
+                buffer.write_u16(size as u16)?;
             }
             ResourceRecord::CNAME {
                 ref domain,
@@ -199,7 +200,8 @@ impl ResourceRecord {
                 buffer.write_qname(cname)?;
 
                 let size = buffer.pos() - (pos + 2);
-                buffer.set_u16(pos, size as u16)?;
+                buffer.seek(pos);
+                buffer.write_u16(size as u16)?;
             }
             ResourceRecord::MX {
                 ref domain,
@@ -220,7 +222,8 @@ impl ResourceRecord {
                 buffer.write_qname(exchange)?;
 
                 let size = buffer.pos() - (pos + 2);
-                buffer.set_u16(pos, size as u16)?;
+                buffer.seek(pos);
+                buffer.write_u16(size as u16)?;
             }
             ResourceRecord::AAAA {
                 ref domain,

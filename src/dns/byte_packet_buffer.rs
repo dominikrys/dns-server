@@ -22,7 +22,7 @@ impl PacketBuffer {
         self.pos += steps;
     }
 
-    fn seek(&mut self, pos: usize) {
+    pub fn seek(&mut self, pos: usize) {
         self.pos = pos;
     }
 
@@ -50,11 +50,8 @@ impl PacketBuffer {
         Ok(&self.buf[start..start + len as usize])
     }
 
-    // TODO: Rename to "read and advance" or split up into methods
-    fn read(&mut self) -> Result<u8> {
-        self.check_end_of_buffer(self.pos)?;
-
-        let res = self.buf[self.pos];
+    fn read_u8(&mut self) -> Result<u8> {
+        let res = self.get(self.pos)?;
         self.pos += 1;
 
         Ok(res)
@@ -62,18 +59,19 @@ impl PacketBuffer {
 
     // TODO: does self need to be mutable?
     // TODO: remove pub
+    // TODO: abstract reading and writing the parts of the byte?
     pub fn read_u16(&mut self) -> Result<u16> {
-        Ok(((self.read()? as u16) << 8) | (self.read()? as u16))
+        Ok(((self.read_u8()? as u16) << 8) | (self.read_u8()? as u16))
     }
 
     // TODO: does self need to be mutable?
     // TODO: remove pub
     pub fn read_u32(&mut self) -> Result<u32> {
         // TODO: use read_16 here? Or generalise for arbitrary values?
-        Ok(((self.read()? as u32) << 24)
-            | ((self.read()? as u32) << 16)
-            | ((self.read()? as u32) << 8)
-            | (self.read()? as u32))
+        Ok(((self.read_u8()? as u32) << 24)
+            | ((self.read_u8()? as u32) << 16)
+            | ((self.read_u8()? as u32) << 8)
+            | (self.read_u8()? as u32))
     }
 
     // TODO: does self need to be mutable?
@@ -136,39 +134,30 @@ impl PacketBuffer {
     }
 
     // TODO: modify the things below with what we included for other bits
-    fn write(&mut self, val: u8) -> Result<()> {
-        if self.pos >= self.buf.len() {
-            return Err("End of buffer".into());
-        }
+    pub fn write_u8(&mut self, val: u8) -> Result<()> {
+        self.check_end_of_buffer(self.pos)?;
 
         self.buf[self.pos] = val;
         self.pos += 1;
-        Ok(())
-    }
-
-    // TODO: what is the point of this and write()? Could combine into one
-    // TODO: make private
-    pub fn write_u8(&mut self, val: u8) -> Result<()> {
-        self.write(val)?;
 
         Ok(())
     }
 
-    // TODO: have these next two functions reuse write_u8 and write_u16?
+    // TODO: have these next two functions reuse write and write_u16?
     // TODO: Make this private?
     pub fn write_u16(&mut self, val: u16) -> Result<()> {
-        self.write((val >> 8) as u8)?;
-        self.write((val & 0xFF) as u8)?;
+        self.write_u8((val >> 8) as u8)?;
+        self.write_u8((val & 0xFF) as u8)?;
 
         Ok(())
     }
 
     // TODO: make private?
     pub fn write_u32(&mut self, val: u32) -> Result<()> {
-        self.write(((val >> 24) & 0xFF) as u8)?; // TODO: do we need the `& 0xFF` here?
-        self.write(((val >> 16) & 0xFF) as u8)?;
-        self.write(((val >> 8) & 0xFF) as u8)?;
-        self.write((val & 0xFF) as u8)?;
+        self.write_u8(((val >> 24) & 0xFF) as u8)?; // TODO: do we need the `& 0xFF` here?
+        self.write_u8(((val >> 16) & 0xFF) as u8)?;
+        self.write_u8(((val >> 8) & 0xFF) as u8)?;
+        self.write_u8((val & 0xFF) as u8)?;
 
         Ok(())
     }
@@ -191,21 +180,6 @@ impl PacketBuffer {
 
         // Null terminate the name
         self.write_u8(0)?;
-
-        Ok(())
-    }
-
-    // TODO: maybe change this to set_u8?
-    fn set(&mut self, pos: usize, val: u8) -> Result<()> {
-        self.buf[pos] = val; // TODO: this could overflow, return an error.
-
-        Ok(())
-    }
-
-    // TODO: can this be private?
-    pub fn set_u16(&mut self, pos: usize, val: u16) -> Result<()> {
-        self.set(pos, (val >> 8) as u8)?;
-        self.set(pos + 1, (val & 0xFF) as u8)?;
 
         Ok(())
     }

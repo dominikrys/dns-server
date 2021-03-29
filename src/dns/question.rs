@@ -15,7 +15,7 @@ impl Question {
         Self { name, qtype }
     }
 
-    pub fn read(&mut self, buffer: &mut PacketBuffer) -> Result<()> {
+    pub fn read_u8(&mut self, buffer: &mut PacketBuffer) -> Result<()> {
         // TODO: this assumes that the buffer position is at the start. Maybe we should set it explicitly
         buffer.read_qname(&mut self.name)?;
 
@@ -27,7 +27,7 @@ impl Question {
     }
 
     // TODO: return the buffer
-    pub fn write(&self, buffer: &mut PacketBuffer) -> Result<()> {
+    pub fn write_u8(&self, buffer: &mut PacketBuffer) -> Result<()> {
         buffer.write_qname(&self.name)?;
 
         let type_num = self.qtype.to_num();
