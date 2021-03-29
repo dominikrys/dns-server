@@ -31,7 +31,7 @@ impl Question {
         buffer.write_qname(&self.name)?;
 
         let type_num = self.qtype.to_num();
-        buffer.write_u16(type_num);
+        buffer.write_u16(type_num)?;
         buffer.write_u16(1)?; // Class
 
         Ok(())

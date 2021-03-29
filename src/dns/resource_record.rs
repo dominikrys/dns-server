@@ -105,11 +105,7 @@ impl ResourceRecord {
                 let mut host = String::new();
                 buffer.read_qname(&mut host)?;
 
-                Ok(ResourceRecord::NS {
-                    domain,
-                    host,
-                    ttl,
-                })
+                Ok(ResourceRecord::NS { domain, host, ttl })
             }
             QuestionType::CNAME => {
                 let mut cname = String::new();
@@ -118,10 +114,10 @@ impl ResourceRecord {
                 Ok(ResourceRecord::CNAME { domain, cname, ttl })
             }
             QuestionType::MX => {
-                let mut priority = buffer.read_u16()?;
+                let priority = buffer.read_u16()?;
                 // TODO read_qname can definitely return a string
                 let mut exchange = String::new();
-                buffer.read_qname(&mut exchange);
+                buffer.read_qname(&mut exchange)?;
 
                 Ok(ResourceRecord::MX {
                     domain,
