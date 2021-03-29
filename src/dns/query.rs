@@ -1,17 +1,17 @@
 use super::packet_buffer::PacketBuffer;
-use super::question_type::QuestionType;
+use super::query_type::QueryType;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Question {
+pub struct Query {
     // TODO: do all these need to be pub?
     pub name: String,
-    pub qtype: QuestionType,
+    pub qtype: QueryType,
 }
 
-impl Question {
-    pub fn new(name: String, qtype: QuestionType) -> Self {
+impl Query {
+    pub fn new(name: String, qtype: QueryType) -> Self {
         Self { name, qtype }
     }
 
@@ -19,7 +19,7 @@ impl Question {
         // TODO: this assumes that the buffer position is at the start. Maybe we should set it explicitly
         self.name = buffer.read_qname()?;
 
-        self.qtype = QuestionType::from_num(buffer.read_u16()?);
+        self.qtype = QueryType::from_num(buffer.read_u16()?);
         let _ = buffer.read_u16()?; // class
                                     // TODO: do we keep the class?
 

@@ -7,23 +7,21 @@ mod dns;
 
 use dns::dns_packet::DnsPacket;
 use dns::packet_buffer::PacketBuffer;
-use dns::question::Question;
-use dns::question_type::QuestionType;
+use dns::query::Query;
+use dns::query_type::QueryType;
 use dns::return_code::ReturnCode;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 // TODO: remove this stuff from main?
-fn lookup(qname: &str, qtype: QuestionType, server: (Ipv4Addr, u16)) -> Result<DnsPacket> {
+fn lookup(qname: &str, qtype: QueryType, server: (Ipv4Addr, u16)) -> Result<DnsPacket> {
     let socket = UdpSocket::bind(("0.0.0.0", 43210))?;
 
     let mut packet = DnsPacket::new();
     packet.header.id = 1234; // TODO: select random id?
-    packet.header.questions_total = 1;
+    packet.header.queries_total = 1;
     packet.header.recursion_desired = true;
-    packet
-        .questions
-        .push(Question::new(qname.to_string(), qtype));
+    packet.queries.push(Query::new(qname.to_string(), qtype));
 
     let mut req_buffer = PacketBuffer::new();
     packet.write(&mut req_buffer)?;
@@ -36,7 +34,7 @@ fn lookup(qname: &str, qtype: QuestionType, server: (Ipv4Addr, u16)) -> Result<D
     DnsPacket::from_buffer(&mut res_buffer)
 }
 
-fn recursive_lookup(qname: &str, qtype: QuestionType) -> Result<DnsPacket> {
+fn recursive_lookup(qname: &str, qtype: QueryType) -> Result<DnsPacket> {
     // TODO: remove this hardcoded IP
     // For now we're always starting with *a.root-servers.net*.
     let mut ns = "198.41.0.4".parse::<Ipv4Addr>().unwrap();
@@ -69,7 +67,7 @@ fn recursive_lookup(qname: &str, qtype: QuestionType) -> Result<DnsPacket> {
         };
 
         // TODO: resolve queries other than A?
-        let recursive_response = recursive_lookup(&new_ns_host, QuestionType::A)?;
+        let recursive_response = recursive_lookup(&new_ns_host, QueryType::A)?;
 
         // Finally, we pick a random ip from the result, and restart the loop. If no such
         // record is available, we again return the last result we got.
@@ -94,12 +92,12 @@ fn handle_query(socket: &UdpSocket) -> Result<()> {
     packet.header.recursion_available = true;
     packet.header.response = true;
 
-    // Only get one question TODO: support more
-    if let Some(question) = request.questions.pop() {
-        println!("\nReceived query: {:?}", question);
+    // Only get one query TODO: support more
+    if let Some(query) = request.queries.pop() {
+        println!("\nReceived query: {:?}", query);
 
-        if let Ok(result) = recursive_lookup(&question.name, question.qtype) {
-            packet.questions.push(question);
+        if let Ok(result) = recursive_lookup(&query.name, query.qtype) {
+            packet.queries.push(query);
             packet.header.return_code = result.header.return_code;
 
             for rec in result.answer_records {

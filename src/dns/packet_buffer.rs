@@ -65,7 +65,6 @@ impl PacketBuffer {
         Ok(((self.read_u16()? as u32) << 16) | (self.read_u16()? as u32))
     }
 
-    // TODO: rename from qname to something better. Maybe domain? Or Question name?
     pub fn read_qname(&mut self) -> Result<String> {
         let mut qname = String::new();
 

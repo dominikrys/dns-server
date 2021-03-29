@@ -2,7 +2,7 @@ use std::net::Ipv4Addr;
 use std::net::Ipv6Addr;
 
 use super::packet_buffer::PacketBuffer;
-use super::question_type::QuestionType;
+use super::query_type::QueryType;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -51,17 +51,17 @@ pub enum ResourceRecord {
 impl ResourceRecord {
     pub fn read_u8(buffer: &mut PacketBuffer) -> Result<ResourceRecord> {
         // TODO: this assumes that the PacketBuffer is at the start. Maybe reset it?
-        let mut domain = buffer.read_qname()?;
+        let domain = buffer.read_qname()?;
 
         let qtype_num = buffer.read_u16()?;
-        let qtype = QuestionType::from_num(qtype_num); // TODO: maybe combine these two in one
+        let qtype = QueryType::from_num(qtype_num); // TODO: maybe combine these two in one
         let _ = buffer.read_u16()?; // Class
         let ttl = buffer.read_u32()?;
         let data_len = buffer.read_u16()?;
 
         // TODO: use the data_len in here somehow, maybe check for limit
         match qtype {
-            QuestionType::A => {
+            QueryType::A => {
                 let raw_ip_addr = buffer.read_u32()?;
                 let ip_addr = Ipv4Addr::new(
                     ((raw_ip_addr >> 24) & 0xFF) as u8,
@@ -77,7 +77,7 @@ impl ResourceRecord {
                     ttl,
                 })
             }
-            QuestionType::AAAA => {
+            QueryType::AAAA => {
                 let raw_ip_addr1 = buffer.read_u32()?;
                 let raw_ip_addr2 = buffer.read_u32()?;
                 let raw_ip_addr3 = buffer.read_u32()?;
@@ -100,19 +100,19 @@ impl ResourceRecord {
                     ttl,
                 })
             }
-            QuestionType::NS => {
-                let mut host = buffer.read_qname()?;
+            QueryType::NS => {
+                let host = buffer.read_qname()?;
 
                 Ok(ResourceRecord::NS { domain, host, ttl })
             }
-            QuestionType::CNAME => {
-                let mut cname = buffer.read_qname()?;
+            QueryType::CNAME => {
+                let cname = buffer.read_qname()?;
 
                 Ok(ResourceRecord::CNAME { domain, cname, ttl })
             }
-            QuestionType::MX => {
+            QueryType::MX => {
                 let priority = buffer.read_u16()?;
-                let mut exchange = buffer.read_qname()?;
+                let exchange = buffer.read_qname()?;
 
                 Ok(ResourceRecord::MX {
                     domain,
@@ -121,7 +121,7 @@ impl ResourceRecord {
                     ttl,
                 })
             }
-            QuestionType::UNKNOWN(_) => {
+            QueryType::UNKNOWN(_) => {
                 buffer.step(data_len as usize); // TODO: what's the point of this? To see if it returns a negative result?
 
                 Ok(ResourceRecord::UNKNOWN {
@@ -145,7 +145,7 @@ impl ResourceRecord {
                 ttl,
             } => {
                 buffer.write_qname(domain)?;
-                buffer.write_u16(QuestionType::A.to_num())?;
+                buffer.write_u16(QueryType::A.to_num())?;
                 buffer.write_u16(1)?; // Class
                 buffer.write_u32(ttl)?;
                 buffer.write_u16(4)?; // TODO: 4 parts of IP?
@@ -163,7 +163,7 @@ impl ResourceRecord {
             } => {
                 // TODO: lots of this is common. Can we compress it?
                 buffer.write_qname(domain)?;
-                buffer.write_u16(QuestionType::NS.to_num())?;
+                buffer.write_u16(QueryType::NS.to_num())?;
                 buffer.write_u16(1)?; // Class
                 buffer.write_u32(ttl)?;
 
@@ -184,7 +184,7 @@ impl ResourceRecord {
                 ttl,
             } => {
                 buffer.write_qname(domain)?;
-                buffer.write_u16(QuestionType::CNAME.to_num())?;
+                buffer.write_u16(QueryType::CNAME.to_num())?;
                 buffer.write_u16(1)?; // Class
                 buffer.write_u32(ttl)?;
 
@@ -205,7 +205,7 @@ impl ResourceRecord {
                 ttl,
             } => {
                 buffer.write_qname(domain)?;
-                buffer.write_u16(QuestionType::MX.to_num())?;
+                buffer.write_u16(QueryType::MX.to_num())?;
                 buffer.write_u16(1)?; // Class
                 buffer.write_u32(ttl)?;
 
@@ -226,7 +226,7 @@ impl ResourceRecord {
                 ttl,
             } => {
                 buffer.write_qname(domain)?;
-                buffer.write_u16(QuestionType::AAAA.to_num())?;
+                buffer.write_u16(QueryType::AAAA.to_num())?;
                 buffer.write_u16(1)?; // Class
                 buffer.write_u32(ttl)?;
                 buffer.write_u16(16)?; // 16 as in 16 octets?

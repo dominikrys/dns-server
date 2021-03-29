@@ -22,7 +22,7 @@ pub struct DnsHeader {
     pub checking_disabled: bool,   // 1 bit
     pub return_code: ReturnCode,   // 4 bits
 
-    pub questions_total: u16,        // 16 bits
+    pub queries_total: u16,          // 16 bits
     pub answer_rr_total: u16,        // 16 bits
     pub authoritative_rr_total: u16, // 16 bits
     pub additional_rr_total: u16,    // 16 bits
@@ -47,7 +47,7 @@ impl DnsHeader {
             checking_disabled: false,
             return_code: ReturnCode::NOERROR,
 
-            questions_total: 0,
+            queries_total: 0,
             answer_rr_total: 0,
             authoritative_rr_total: 0,
             additional_rr_total: 0,
@@ -76,7 +76,7 @@ impl DnsHeader {
         self.checking_disabled = (flags_half_2 & (1 << 4)) > 0;
         self.return_code = ReturnCode::from_num(flags_half_2 & 0x0F);
 
-        self.questions_total = buffer.read_u16()?;
+        self.queries_total = buffer.read_u16()?;
         self.answer_rr_total = buffer.read_u16()?;
         self.authoritative_rr_total = buffer.read_u16()?;
         self.additional_rr_total = buffer.read_u16()?;
@@ -105,7 +105,7 @@ impl DnsHeader {
 
         buffer.write_u8(flags_half_2)?;
 
-        buffer.write_u16(self.questions_total)?;
+        buffer.write_u16(self.queries_total)?;
         buffer.write_u16(self.answer_rr_total)?;
         buffer.write_u16(self.authoritative_rr_total)?;
         buffer.write_u16(self.additional_rr_total)?;
