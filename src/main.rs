@@ -5,7 +5,7 @@ use std::net::UdpSocket;
 
 mod dns;
 
-use dns::dns_packet::DnsPacket;
+use dns::packet::Packet;
 use dns::packet_buffer::PacketBuffer;
 use dns::query::Query;
 use dns::query_type::QueryType;
@@ -14,10 +14,10 @@ use dns::return_code::ReturnCode;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 // TODO: remove this stuff from main?
-fn lookup(qname: &str, qtype: QueryType, server: (Ipv4Addr, u16)) -> Result<DnsPacket> {
+fn lookup(qname: &str, qtype: QueryType, server: (Ipv4Addr, u16)) -> Result<Packet> {
     let socket = UdpSocket::bind(("0.0.0.0", 43210))?;
 
-    let mut packet = DnsPacket::new();
+    let mut packet = Packet::new();
     packet.header.id = 1234; // TODO: select random id?
     packet.header.queries_total = 1;
     packet.header.recursion_desired = true;
@@ -31,10 +31,10 @@ fn lookup(qname: &str, qtype: QueryType, server: (Ipv4Addr, u16)) -> Result<DnsP
     socket.recv_from(&mut raw_res_buffer)?;
     let mut res_buffer = PacketBuffer::from_u8_array(raw_res_buffer);
 
-    DnsPacket::from_buffer(&mut res_buffer)
+    Packet::from_buffer(&mut res_buffer)
 }
 
-fn recursive_lookup(qname: &str, qtype: QueryType) -> Result<DnsPacket> {
+fn recursive_lookup(qname: &str, qtype: QueryType) -> Result<Packet> {
     // TODO: remove this hardcoded IP
     // For now we're always starting with *a.root-servers.net*.
     let mut ns = "198.41.0.4".parse::<Ipv4Addr>().unwrap();
@@ -84,9 +84,9 @@ fn handle_query(socket: &UdpSocket) -> Result<()> {
     let mut raw_res_buffer: [u8; 512] = [0; 512];
     let (_, src) = socket.recv_from(&mut raw_res_buffer)?;
     let mut req_buffer = PacketBuffer::from_u8_array(raw_res_buffer);
-    let mut request = DnsPacket::from_buffer(&mut req_buffer)?;
+    let mut request = Packet::from_buffer(&mut req_buffer)?;
 
-    let mut packet = DnsPacket::new();
+    let mut packet = Packet::new();
     packet.header.id = request.header.id;
     packet.header.recursion_desired = true;
     packet.header.recursion_available = true;
@@ -94,7 +94,7 @@ fn handle_query(socket: &UdpSocket) -> Result<()> {
 
     // Only get one query TODO: support more
     if let Some(query) = request.queries.pop() {
-        println!("\nReceived query: {:?}", query);
+        println!("Received query: {:?}", query);
 
         if let Ok(result) = recursive_lookup(&query.name, query.qtype) {
             packet.queries.push(query);
@@ -134,7 +134,7 @@ fn main() -> Result<()> {
     let port = 2053;
     let socket = UdpSocket::bind(("0.0.0.0", port))?;
 
-    println!("=== DNS server listening on port {} ===", port);
+    println!("=== DNS server listening on port {} ===\n", port);
 
     // TODO: don't make an infinite loop
     loop {

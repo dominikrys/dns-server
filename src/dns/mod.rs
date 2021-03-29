@@ -1,7 +1,7 @@
 // TODO: do all of these need to be pub?
 
-pub mod dns_header;
-pub mod dns_packet;
+pub mod header;
+pub mod packet;
 pub mod packet_buffer;
 pub mod query;
 pub mod query_type;

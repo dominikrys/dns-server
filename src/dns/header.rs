@@ -6,7 +6,7 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 // Reference: http://www.networksorcery.com/enp/protocol/dns.htm
 // TODO: maybe rename to "header"
 #[derive(Clone, Debug)]
-pub struct DnsHeader {
+pub struct Header {
     // TODO: do all these need to be pub?
     pub id: u16, // 16 bits
 
@@ -28,11 +28,11 @@ pub struct DnsHeader {
     pub additional_rr_total: u16,    // 16 bits
 }
 
-impl DnsHeader {
+impl Header {
     pub fn new() -> Self {
         // TODO: maybe change to default instead: https://users.rust-lang.org/t/default-and-optional-parameter/27693/4
         // TODO: Also check if this would be useful anywhere else in the code
-        DnsHeader {
+        Header {
             id: 0,
 
             response: false,

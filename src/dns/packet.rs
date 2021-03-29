@@ -1,6 +1,6 @@
 use std::net::Ipv4Addr;
 
-use super::dns_header::DnsHeader;
+use super::header::Header;
 use super::packet_buffer::PacketBuffer;
 use super::query::Query;
 use super::query_type::QueryType;
@@ -11,19 +11,19 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 // TODO: do we need both these traits?
 #[derive(Clone, Debug)]
 // TODO: maybe rename to just "packet"? and the other _dns stuff. Redundant since inside "DNS" module?
-pub struct DnsPacket {
+pub struct Packet {
     // TODO: should these all be pub?
-    pub header: DnsHeader,
+    pub header: Header,
     pub queries: Vec<Query>,
     pub answer_records: Vec<ResourceRecord>,
     pub authoritative_records: Vec<ResourceRecord>,
     pub additional_records: Vec<ResourceRecord>,
 }
 
-impl DnsPacket {
+impl Packet {
     pub fn new() -> Self {
-        DnsPacket {
-            header: DnsHeader::new(),
+        Packet {
+            header: Header::new(),
             queries: Vec::new(),
             answer_records: Vec::new(),
             authoritative_records: Vec::new(),
@@ -31,8 +31,8 @@ impl DnsPacket {
         }
     }
 
-    pub fn from_buffer(buffer: &mut PacketBuffer) -> Result<DnsPacket> {
-        let mut result = DnsPacket::new();
+    pub fn from_buffer(buffer: &mut PacketBuffer) -> Result<Packet> {
+        let mut result = Packet::new();
         result.header.read_u8(buffer)?;
 
         // TODO: can we tidy this repetition?
