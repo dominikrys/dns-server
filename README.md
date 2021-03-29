@@ -1,8 +1,29 @@
-# DNS Server in Rust
+# DNS Server
+
+Rudimentary DNS server in Rust. Based off [Emil Hernvall's DNS guide](https://github.com/EmilHernvall/dnsguide).
+
+## Build Instructions
+
+```bash
+cargo build
+```
+
+## Run Instructions
+
+Run the server:
+
+```bash
+cargo run
+```
+
+Send DNS query to port 2053:
+
+```bash
+dig @127.0.0.1 -p 2053 www.google.com
+```
 
 ## TODO
 
-- fix recusrive resolve
 - finish implementation + compare
 - sort out warnings
 - go through TODOs
@@ -29,7 +50,6 @@
 - Run clippy
 - Query or Question. Keep consistent!
 - Started using https://github.com/EmilHernvall/dnsguide
-- Add README
 - Extra nice stuff:
   - Concurrency
   - TCP connections
