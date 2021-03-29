@@ -97,7 +97,7 @@ impl DnsPacket {
     // TODO: read through the next two functions properly: https://github.com/EmilHernvall/dnsguide/blob/master/chapter5.md
 
     // TODO: make return type obvious that they're a domain and host
-    fn get_nameservers<'a>(&'a self, qname: &'a str) -> impl Iterator<Item = (&'a str, &'a str)> {
+    fn get_ns_iter<'a>(&'a self, qname: &'a str) -> impl Iterator<Item = (&'a str, &'a str)> {
         self.authoritative_records
             .iter()
             .filter_map(|record| match record {
@@ -112,7 +112,7 @@ impl DnsPacket {
     pub fn get_ns_from_additional_records(&self, qname: &str) -> Option<Ipv4Addr> {
         // TODO: implement out of bailiwick check: https://www.farsightsecurity.com/blog/txt-record/what-is-a-bailiwick-20170321
         // TODO: otherwise, maybe remove this method. Check what "authoritative" is supposed to mean here
-        self.get_nameservers(qname)
+        self.get_ns_iter(qname)
             .flat_map(|(_, host)| {
                 self.additional_records
                     .iter()
@@ -129,7 +129,7 @@ impl DnsPacket {
     }
 
     pub fn get_ns_host<'a>(&'a self, qname: &'a str) -> Option<&'a str> {
-        self.get_nameservers(qname)
+        self.get_ns_iter(qname)
             // TODO: tidy this
             .map(|(_, host)| host)
             .next()
