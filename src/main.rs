@@ -96,7 +96,7 @@ fn handle_query(socket: &UdpSocket) -> Result<()> {
 
     // Only get one question TODO: support more
     if let Some(question) = request.questions.pop() {
-        println!("Received query: {:?}", question);
+        println!("\nReceived query: {:?}", question);
 
         if let Ok(result) = recursive_lookup(&question.name, question.qtype) {
             packet.questions.push(question);

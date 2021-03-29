@@ -26,8 +26,7 @@ dig @127.0.0.1 -p 2053 www.google.com
 
 ## TODO
 
-- re-read code
-- go through TODOs
+- re-read all code and go through TODOs
 - make into lib and not bin?
 - refactor + naming
   - no side effects

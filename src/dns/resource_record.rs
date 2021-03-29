@@ -51,8 +51,7 @@ pub enum ResourceRecord {
 impl ResourceRecord {
     pub fn read_u8(buffer: &mut PacketBuffer) -> Result<ResourceRecord> {
         // TODO: this assumes that the PacketBuffer is at the start. Maybe reset it?
-        let mut domain = String::new();
-        buffer.read_qname(&mut domain)?;
+        let mut domain = buffer.read_qname()?;
 
         let qtype_num = buffer.read_u16()?;
         let qtype = QuestionType::from_num(qtype_num); // TODO: maybe combine these two in one
@@ -102,22 +101,18 @@ impl ResourceRecord {
                 })
             }
             QuestionType::NS => {
-                let mut host = String::new();
-                buffer.read_qname(&mut host)?;
+                let mut host = buffer.read_qname()?;
 
                 Ok(ResourceRecord::NS { domain, host, ttl })
             }
             QuestionType::CNAME => {
-                let mut cname = String::new();
-                buffer.read_qname(&mut cname)?;
+                let mut cname = buffer.read_qname()?;
 
                 Ok(ResourceRecord::CNAME { domain, cname, ttl })
             }
             QuestionType::MX => {
                 let priority = buffer.read_u16()?;
-                // TODO read_qname can definitely return a string
-                let mut exchange = String::new();
-                buffer.read_qname(&mut exchange)?;
+                let mut exchange = buffer.read_qname()?;
 
                 Ok(ResourceRecord::MX {
                     domain,

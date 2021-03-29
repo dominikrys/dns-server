@@ -15,10 +15,7 @@ impl PacketBuffer {
     }
 
     pub fn from_u8_array(buf: [u8; BUF_SIZE]) -> Self {
-        PacketBuffer {
-            buf,
-            pos: 0,
-        }
+        PacketBuffer { buf, pos: 0 }
     }
 
     pub fn pos(&self) -> usize {
@@ -60,27 +57,18 @@ impl PacketBuffer {
         Ok(res)
     }
 
-    // TODO: remove pub
-    // TODO: abstract reading and writing the parts of the byte?
     pub fn read_u16(&mut self) -> Result<u16> {
         Ok(((self.read_u8()? as u16) << 8) | (self.read_u8()? as u16))
     }
 
-    // TODO: does self need to be mutable?
-    // TODO: remove pub
     pub fn read_u32(&mut self) -> Result<u32> {
-        // TODO: use read_16 here? Or generalise for arbitrary values?
-        Ok(((self.read_u8()? as u32) << 24)
-            | ((self.read_u8()? as u32) << 16)
-            | ((self.read_u8()? as u32) << 8)
-            | (self.read_u8()? as u32))
+        Ok(((self.read_u16()? as u32) << 16) | (self.read_u16()? as u32))
     }
 
-    // TODO: does self need to be mutable?
-    // TODO: can just return the string and not output it in an input?
     // TODO: rename from qname to something better. Maybe domain? Or Question name?
-    // TODO: remove pub
-    pub fn read_qname(&mut self, outstr: &mut String) -> Result<()> {
+    pub fn read_qname(&mut self) -> Result<String> {
+        let mut qname = String::new();
+
         let mut pos = self.pos(); // TODO: maybe make more obvious that this is local
 
         let mut jumped = false;
@@ -88,6 +76,7 @@ impl PacketBuffer {
         let mut jumps_performed = 0;
 
         let mut delim = "";
+
         loop {
             if jumps_performed > max_jumps {
                 return Err(format!("Limit of {} jumps exceeded", max_jumps).into());
@@ -95,7 +84,10 @@ impl PacketBuffer {
 
             let len = self.get(pos)?; // TODO: rename to label_len
 
-            if (len & 0xC0) == 0xC0 {
+            // Check if the two most significant bits are set: https://docstore.mik.ua/orelly/networking_2ndEd/dns/ch15_02.htm
+            let two_msb_mask = 0xC0;
+
+            if (len & two_msb_mask) == two_msb_mask {
                 // TODO: get rid of these parentheses
                 if !jumped {
                     // TODO: explain that we're adding 2 because the len field is 2 bytes in size
@@ -103,13 +95,11 @@ impl PacketBuffer {
                 }
 
                 let b2 = self.get(pos + 1)? as u16; // TODO: rename to "next_byte". This is the next byte of the length
-                let offset = (((len as u16) ^ 0xC0) << 8) | b2;
+                let offset = (((len as u16) ^ two_msb_mask as u16) << 8) | b2;
                 pos = offset as usize;
 
                 jumped = true;
                 jumps_performed += 1;
-
-                continue; // TODO: is this redundant
             } else {
                 pos += 1;
 
@@ -117,10 +107,10 @@ impl PacketBuffer {
                     break;
                 }
 
-                outstr.push_str(delim);
+                qname.push_str(delim);
 
                 let str_buffer = self.get_range(pos, len as usize)?;
-                outstr.push_str(&String::from_utf8_lossy(str_buffer).to_lowercase()); // TODO: try without lossy, then fall back to lossy if it fails
+                qname.push_str(&String::from_utf8_lossy(str_buffer).to_lowercase()); // TODO: try without lossy, then fall back to lossy if it fails
 
                 delim = "."; // TODO: do delim more cleanly
 
@@ -132,10 +122,9 @@ impl PacketBuffer {
             self.seek(pos);
         }
 
-        Ok(())
+        Ok(qname)
     }
 
-    // TODO: modify the things below with what we included for other bits
     pub fn write_u8(&mut self, val: u8) -> Result<()> {
         self.check_end_of_buf(self.pos)?;
 
@@ -145,8 +134,6 @@ impl PacketBuffer {
         Ok(())
     }
 
-    // TODO: have these next two functions reuse write and write_u16?
-    // TODO: Make this private?
     pub fn write_u16(&mut self, val: u16) -> Result<()> {
         self.write_u8((val >> 8) as u8)?;
         self.write_u8((val & 0xFF) as u8)?;
@@ -154,17 +141,13 @@ impl PacketBuffer {
         Ok(())
     }
 
-    // TODO: make private?
     pub fn write_u32(&mut self, val: u32) -> Result<()> {
-        self.write_u8(((val >> 24) & 0xFF) as u8)?; // TODO: do we need the `& 0xFF` here?
-        self.write_u8(((val >> 16) & 0xFF) as u8)?;
-        self.write_u8(((val >> 8) & 0xFF) as u8)?;
-        self.write_u8((val & 0xFF) as u8)?;
+        self.write_u16((val >> 16) as u16)?;
+        self.write_u16((val & 0xFFFF) as u16)?;
 
         Ok(())
     }
 
-    // TODO: should this be public?
     pub fn write_qname(&mut self, qname: &str) -> Result<()> {
         for label in qname.split('.') {
             let len = label.len();

@@ -17,7 +17,7 @@ impl Question {
 
     pub fn read_u8(&mut self, buffer: &mut PacketBuffer) -> Result<()> {
         // TODO: this assumes that the buffer position is at the start. Maybe we should set it explicitly
-        buffer.read_qname(&mut self.name)?;
+        self.name = buffer.read_qname()?;
 
         self.qtype = QuestionType::from_num(buffer.read_u16()?);
         let _ = buffer.read_u16()?; // class

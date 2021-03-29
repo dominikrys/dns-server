@@ -1,7 +1,7 @@
 use std::net::Ipv4Addr;
 
-use super::packet_buffer::PacketBuffer;
 use super::dns_header::DnsHeader;
+use super::packet_buffer::PacketBuffer;
 use super::question::Question;
 use super::question_type::QuestionType;
 use super::resource_record::ResourceRecord;
