@@ -1,6 +1,6 @@
 use std::net::Ipv4Addr;
 
-use super::byte_packet_buffer::PacketBuffer;
+use super::packet_buffer::PacketBuffer;
 use super::dns_header::DnsHeader;
 use super::question::Question;
 use super::question_type::QuestionType;

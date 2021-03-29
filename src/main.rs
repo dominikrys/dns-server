@@ -5,8 +5,8 @@ use std::net::UdpSocket;
 
 mod dns;
 
-use dns::byte_packet_buffer::PacketBuffer;
 use dns::dns_packet::DnsPacket;
+use dns::packet_buffer::PacketBuffer;
 use dns::question::Question;
 use dns::question_type::QuestionType;
 use dns::return_code::ReturnCode;
@@ -18,8 +18,7 @@ fn lookup(qname: &str, qtype: QuestionType, server: (Ipv4Addr, u16)) -> Result<D
     let socket = UdpSocket::bind(("0.0.0.0", 43210))?;
 
     let mut packet = DnsPacket::new();
-
-    packet.header.id = 1234; // TODO: random?
+    packet.header.id = 1234; // TODO: select random id?
     packet.header.questions_total = 1;
     packet.header.recursion_desired = true;
     packet
@@ -28,10 +27,11 @@ fn lookup(qname: &str, qtype: QuestionType, server: (Ipv4Addr, u16)) -> Result<D
 
     let mut req_buffer = PacketBuffer::new();
     packet.write(&mut req_buffer)?;
-    socket.send_to(&req_buffer.buf[0..req_buffer.pos()], server)?;
+    socket.send_to(req_buffer.get_range(0, req_buffer.pos())?, server)?;
 
-    let mut res_buffer = PacketBuffer::new();
-    socket.recv_from(&mut res_buffer.buf)?;
+    let mut raw_res_buffer: [u8; 512] = [0; 512];
+    socket.recv_from(&mut raw_res_buffer)?;
+    let mut res_buffer = PacketBuffer::from_u8_array(raw_res_buffer);
 
     DnsPacket::from_buffer(&mut res_buffer)
 }
@@ -83,8 +83,9 @@ fn recursive_lookup(qname: &str, qtype: QuestionType) -> Result<DnsPacket> {
 
 fn handle_query(socket: &UdpSocket) -> Result<()> {
     // Blocks until a reply is received
-    let mut req_buffer = PacketBuffer::new();
-    let (_, src) = socket.recv_from(&mut req_buffer.buf)?;
+    let mut raw_res_buffer: [u8; 512] = [0; 512];
+    let (_, src) = socket.recv_from(&mut raw_res_buffer)?;
+    let mut req_buffer = PacketBuffer::from_u8_array(raw_res_buffer);
     let mut request = DnsPacket::from_buffer(&mut req_buffer)?;
 
     let mut packet = DnsPacket::new();

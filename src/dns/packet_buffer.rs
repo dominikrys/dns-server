@@ -2,7 +2,7 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 const BUF_SIZE: usize = 512;
 pub struct PacketBuffer {
-    pub buf: [u8; BUF_SIZE],
+    buf: [u8; BUF_SIZE],
     pos: usize,
 }
 
@@ -10,6 +10,13 @@ impl PacketBuffer {
     pub fn new() -> Self {
         PacketBuffer {
             buf: [0; BUF_SIZE],
+            pos: 0,
+        }
+    }
+
+    pub fn from_u8_array(buf: [u8; BUF_SIZE]) -> Self {
+        PacketBuffer {
+            buf,
             pos: 0,
         }
     }
@@ -26,7 +33,7 @@ impl PacketBuffer {
         self.pos = pos;
     }
 
-    fn check_end_of_buffer(&self, pos: usize) -> Result<()> {
+    fn check_end_of_buf(&self, pos: usize) -> Result<()> {
         if pos >= self.buf.len() {
             return Err("End of buffer".into());
         }
@@ -35,13 +42,13 @@ impl PacketBuffer {
     }
 
     fn get(&self, pos: usize) -> Result<u8> {
-        self.check_end_of_buffer(pos)?;
+        self.check_end_of_buf(pos)?;
 
         Ok(self.buf[pos])
     }
 
     pub fn get_range(&self, start: usize, len: usize) -> Result<&[u8]> {
-        self.check_end_of_buffer(start + len)?;
+        self.check_end_of_buf(start + len)?;
 
         Ok(&self.buf[start..start + len as usize])
     }
@@ -130,7 +137,7 @@ impl PacketBuffer {
 
     // TODO: modify the things below with what we included for other bits
     pub fn write_u8(&mut self, val: u8) -> Result<()> {
-        self.check_end_of_buffer(self.pos)?;
+        self.check_end_of_buf(self.pos)?;
 
         self.buf[self.pos] = val;
         self.pos += 1;
