@@ -94,6 +94,8 @@ impl DnsPacket {
             .next()
     }
 
+    // TODO: read through the next two functions properly: https://github.com/EmilHernvall/dnsguide/blob/master/chapter5.md
+
     // TODO: make return type obvious that they're a domain and host
     fn get_nameservers<'a>(&'a self, qname: &'a str) -> impl Iterator<Item = (&'a str, &'a str)> {
         self.authoritative_records
@@ -107,11 +109,29 @@ impl DnsPacket {
             .filter(move |(domain, _)| qname.ends_with(*domain))
     }
 
-    // TODO: rename this method 
-    pub fn get_nameserver_host<'a>(&'a self, qname: &'a str) -> Option<&'a str> {
-        // Get the first valid entry. Don't use additional section
+    pub fn get_ns_from_additional_records(&self, qname: &str) -> Option<Ipv4Addr> {
         // TODO: implement out of bailiwick check: https://www.farsightsecurity.com/blog/txt-record/what-is-a-bailiwick-20170321
-        // TODO: tidy this
-        self.get_nameservers(qname).map(|(_, host)| host).next()
+        // TODO: otherwise, maybe remove this method. Check what "authoritative" is supposed to mean here
+        self.get_nameservers(qname)
+            .flat_map(|(_, host)| {
+                self.additional_records
+                    .iter()
+                    .filter_map(move |record| match record {
+                        ResourceRecord::A {
+                            domain, ip_addr, ..
+                        } if domain == host => Some(ip_addr),
+                        _ => None,
+                    })
+            })
+            .map(|addr| *addr)
+            // TODO: can we use something else than .next()?
+            .next()
+    }
+
+    pub fn get_ns_host<'a>(&'a self, qname: &'a str) -> Option<&'a str> {
+        self.get_nameservers(qname)
+            // TODO: tidy this
+            .map(|(_, host)| host)
+            .next()
     }
 }

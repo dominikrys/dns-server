@@ -17,7 +17,7 @@ fn lookup(qname: &str, qtype: QuestionType, server: (Ipv4Addr, u16)) -> Result<D
 
     let mut packet = DnsPacket::new();
 
-    packet.header.id = 1234;
+    packet.header.id = 1234; // TODO: random?
     packet.header.questions_total = 1;
     packet.header.recursion_desired = true;
     packet
@@ -42,7 +42,7 @@ fn recursive_lookup(qname: &str, qtype: QuestionType) -> Result<DnsPacket> {
     loop {
         println!("Performing lookup of {:?} {} with ns {}", qtype, qname, ns);
 
-        let server = (ns.clone(), 53);
+        let server = (ns, 53);
         let response = lookup(qname, qtype, server)?;
 
         // TODO: can we combine these into a match?
@@ -55,12 +55,18 @@ fn recursive_lookup(qname: &str, qtype: QuestionType) -> Result<DnsPacket> {
             return Ok(response);
         }
 
-        // Resolve IP of an NS record
-        let new_ns_host = match response.get_nameserver_host(qname) {
+        if let Some(new_ns) = response.get_ns_from_additional_records(qname) {
+            ns = new_ns;
+            continue;
+        }
+
+        // Resolve IP of an NS record TODO: is this broken? Try to comment the previous part and see if this still works
+        let new_ns_host = match response.get_ns_host(qname) {
             Some(x) => x,
             None => return Ok(response),
         };
 
+        // TODO: resolve queries other than A?
         let recursive_response = recursive_lookup(&new_ns_host, QuestionType::A)?;
 
         // Finally, we pick a random ip from the result, and restart the loop. If no such
@@ -76,7 +82,6 @@ fn recursive_lookup(qname: &str, qtype: QuestionType) -> Result<DnsPacket> {
 fn handle_query(socket: &UdpSocket) -> Result<()> {
     // Blocks until a reply is received
     let mut req_buffer = BytePacketBuffer::new();
-
     let (_, src) = socket.recv_from(&mut req_buffer.buf)?;
     let mut request = DnsPacket::from_buffer(&mut req_buffer)?;
 

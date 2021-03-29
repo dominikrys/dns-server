@@ -2,13 +2,14 @@
 
 ## TODO
 
+- fix recusrive resolve
 - finish implementation + compare
 - sort out warnings
 - go through TODOs
 - remove dns\_\* from files. We know it's DNS.
 - refactor + naming
   - no side effects
-  - unambiguous names
+  - unambiguous and consistent names e.g. domain and host
   - add comments if really necessary
 - sort out directory structure
 - add tests?
@@ -28,3 +29,9 @@
 - Run clippy
 - Query or Question. Keep consistent!
 - Started using https://github.com/EmilHernvall/dnsguide
+- Add README
+- Extra nice stuff:
+  - Concurrency
+  - TCP connections
+  - Host our own zones? Allow to act a authoritative server?
+  - DNSSEC?
