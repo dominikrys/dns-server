@@ -24,13 +24,12 @@ dig @127.0.0.1 -p 2053 www.google.com
 
 ## TODO
 
-- sort out redundant warnings from clippy
 - re-read code
 - go through TODOs
 - make into lib and not bin?
 - refactor + naming
   - no side effects
-  - Query or Question. Keep consistent!
+  - Query or Question, qname qtype. Keep consistent!
   - unambiguous and consistent names e.g. domain and host
   - add comments if really necessary
   - remove dns\_\* from files. We know it's DNS.

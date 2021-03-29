@@ -1,16 +1,18 @@
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
+const BUF_SIZE: usize = 512;
+
 // TODO: rename from BytePacketBuffer? Change buf and pos to full words?
 pub struct BytePacketBuffer {
     // TODO: do all these need to be pub?
-    pub buf: [u8; 512],
+    pub buf: [u8; BUF_SIZE],
     pub pos: usize,
 }
 
 impl BytePacketBuffer {
     pub fn new() -> Self {
         BytePacketBuffer {
-            buf: [0; 512],
+            buf: [0; BUF_SIZE],
             pos: 0,
         }
     }
@@ -21,38 +23,26 @@ impl BytePacketBuffer {
     }
 
     // TODO: remove pub
-    pub fn step(&mut self, steps: usize) -> Result<()> {
-        self.pos += steps; // TODO: Can this not overflow?
-
-        Ok(()) // TODO: Should we return a proper error?
+    pub fn step(&mut self, steps: usize) {
+        self.pos += steps;
     }
 
-    fn seek(&mut self, pos: usize) -> Result<()> {
-        self.pos = pos; // TODO: Can this not overflow?
-
-        Ok(()) // TODO: Should we return a proper error?
+    fn seek(&mut self, pos: usize) {
+        self.pos = pos;
     }
 
-    // TODO: Rename to "read and advance" or split up into methods
-    fn read(&mut self) -> Result<u8> {
-        if self.pos >= 512 {
-            // TODO: Can we store the size in a constant?
-            // TODO: add type for this kind of error?
+    fn check_end_of_buffer(&mut self, pos: usize) -> Result<()> {
+        if pos >= self.buf.len() {
             return Err("End of buffer".into());
         }
 
-        let res = self.buf[self.pos];
-        self.pos += 1;
-
-        Ok(res)
+        Ok(())
     }
 
     // TODO: does self need to be mutable?
     // TODO: do we need to specify pos or can we just return the current position?
     fn get(&mut self, pos: usize) -> Result<u8> {
-        if pos >= 512 {
-            return Err("End of buffer".into());
-        }
+        self.check_end_of_buffer(pos)?;
 
         Ok(self.buf[pos])
     }
@@ -60,12 +50,19 @@ impl BytePacketBuffer {
     // TODO: does self need to be mutable?
     // TODO: make this private?
     pub fn get_range(&mut self, start: usize, len: usize) -> Result<&[u8]> {
-        // TODO: maybe refactor this range check
-        if start + len >= 512 {
-            return Err("End of buffer".into());
-        }
+        self.check_end_of_buffer(start + len)?;
 
         Ok(&self.buf[start..start + len as usize])
+    }
+
+    // TODO: Rename to "read and advance" or split up into methods
+    fn read(&mut self) -> Result<u8> {
+        self.check_end_of_buffer(self.pos)?;
+
+        let res = self.buf[self.pos];
+        self.pos += 1;
+
+        Ok(res)
     }
 
     // TODO: does self need to be mutable?
@@ -107,7 +104,7 @@ impl BytePacketBuffer {
                 // TODO: get rid of these parentheses
                 if !jumped {
                     // TODO: explain that we're adding 2 because the len field is 2 bytes in size
-                    self.seek(pos + 2)?; // TODO: can we use len to seek here? Seeking to pos isn't very intuitive
+                    self.seek(pos + 2); // TODO: can we use len to seek here? Seeking to pos isn't very intuitive
                 }
 
                 let b2 = self.get(pos + 1)? as u16; // TODO: rename to "next_byte". This is the next byte of the length
@@ -137,7 +134,7 @@ impl BytePacketBuffer {
         }
 
         if !jumped {
-            self.seek(pos)?;
+            self.seek(pos);
         }
 
         Ok(())
@@ -145,7 +142,7 @@ impl BytePacketBuffer {
 
     // TODO: modify the things below with what we included for other bits
     fn write(&mut self, val: u8) -> Result<()> {
-        if self.pos >= 512 {
+        if self.pos >= self.buf.len() {
             return Err("End of buffer".into());
         }
 

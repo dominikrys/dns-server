@@ -127,7 +127,7 @@ impl ResourceRecord {
                 })
             }
             QuestionType::UNKNOWN(_) => {
-                buffer.step(data_len as usize)?; // TODO: what's the point of this? To see if it returns a negative result?
+                buffer.step(data_len as usize); // TODO: what's the point of this? To see if it returns a negative result?
 
                 Ok(ResourceRecord::UNKNOWN {
                     domain,
