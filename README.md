@@ -33,7 +33,7 @@ dig @127.0.0.1 -p 2053 www.google.com
   - unambiguous and consistent names e.g. domain and host
   - utilise the result type for returning values and errors
   - sort out directory structure
-    - should we include more stuff in one file?
+    - should we include more stuff in one file? protocol, buffer, server
     - alternatively, is there a way to reduce the amount of `use super::*`?
     - maybe use [`pub use`](https://www.reddit.com/r/rust/comments/6x49mu/what_are_some_rules_of_thumb_for_use/dmd07yr?utm_source=share&utm_medium=web2x&context=3)?
   - are the file names correct?
