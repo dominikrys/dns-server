@@ -64,19 +64,19 @@ impl Packet {
         self.header.authoritative_rr_total = self.authoritative_records.len() as u16;
         self.header.additional_rr_total = self.additional_records.len() as u16;
 
-        self.header.write(buffer)?;
+        self.header.write_to_buffer(buffer)?;
 
         for query in &self.queries {
-            query.write(buffer)?;
+            query.write_to_buffer(buffer)?;
         }
         for rec in &self.answer_records {
-            rec.write(buffer)?;
+            rec.write_to_buffer(buffer)?;
         }
         for rec in &self.authoritative_records {
-            rec.write(buffer)?;
+            rec.write_to_buffer(buffer)?;
         }
         for rec in &self.additional_records {
-            rec.write(buffer)?;
+            rec.write_to_buffer(buffer)?;
         }
 
         Ok(())

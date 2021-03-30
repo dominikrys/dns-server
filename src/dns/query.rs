@@ -26,8 +26,7 @@ impl Query {
         Ok(Query::new(qname, qtype))
     }
 
-    // TODO: return the buffer
-    pub fn write(&self, buffer: &mut PacketBuffer) -> Result<()> {
+    pub fn write_to_buffer(&self, buffer: &mut PacketBuffer) -> Result<()> {
         buffer.write_qname(&self.name)?;
 
         let type_num = self.qtype.to_num();
