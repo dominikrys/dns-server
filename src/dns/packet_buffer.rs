@@ -101,7 +101,7 @@ impl PacketBuffer {
                 }
 
                 if !qname.is_empty() {
-                    qname.push_str(".");
+                    qname.push('.');
                 }
 
                 let str_buffer = self.get_range(pos, label_len as usize)?;
@@ -144,20 +144,20 @@ impl PacketBuffer {
     pub fn write_qname(&mut self, qname: &str) -> Result<()> {
         for label in qname.split('.') {
             let len = label.len();
-            if len > 63 {
-                return Err("Single label exceeds 63 characters of length".into());
-                // TODO: should we restore the whole buffer in this case?
+
+            let label_len_limit = 63;
+            if len > label_len_limit {
+                return Err(format!("Single label exceeds max length of {} characters", label_len_limit).into());
             }
 
             self.write_u8(len as u8)?;
-            for b in label.as_bytes() {
-                // TODO: can we avoid the * here and instead use a reference?
-                self.write_u8(*b)?;
+            
+            for &b in label.as_bytes() {
+                self.write_u8(b)?;
             }
         }
 
-        // Null terminate the name
-        self.write_u8(0)?;
+        self.write_u8(0)?; // Null terminate the name
 
         Ok(())
     }
