@@ -4,34 +4,31 @@ use super::return_code::ReturnCode;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 // Reference: http://www.networksorcery.com/enp/protocol/dns.htm
-// TODO: maybe rename to "header"
+
 #[derive(Clone, Debug)]
 pub struct Header {
-    // TODO: do all these need to be pub?
-    pub id: u16, // 16 bits
+    pub id: u16,
 
-    pub response: bool,             // 1 bit
-    pub opcode: u8,                 // 4 bits
-    pub authoritative_answer: bool, // 1 bit
-    pub truncated_message: bool,    // 1 bit
-    pub recursion_desired: bool,    // 1 bit
+    pub response: bool,
+    pub opcode: u8, // 4 bits
+    pub authoritative_answer: bool,
+    pub truncated_message: bool,
+    pub recursion_desired: bool,
 
-    pub recursion_available: bool, // 1 bit
-    pub z: bool,                   // 1 bit
-    pub authenticated_data: bool,  // 1 bit
-    pub checking_disabled: bool,   // 1 bit
-    pub return_code: ReturnCode,   // 4 bits
+    pub recursion_available: bool,
+    pub z: bool,
+    pub authenticated_data: bool,
+    pub checking_disabled: bool,
+    pub return_code: ReturnCode, // 4 bits
 
-    pub queries_total: u16,          // 16 bits
-    pub answer_rr_total: u16,        // 16 bits
-    pub authoritative_rr_total: u16, // 16 bits
-    pub additional_rr_total: u16,    // 16 bits
+    pub queries_total: u16,
+    pub answer_rr_total: u16,
+    pub authoritative_rr_total: u16,
+    pub additional_rr_total: u16,
 }
 
 impl Header {
     pub fn new() -> Self {
-        // TODO: maybe change to default instead: https://users.rust-lang.org/t/default-and-optional-parameter/27693/4
-        // TODO: Also check if this would be useful anywhere else in the code
         Header {
             id: 0,
 
@@ -54,34 +51,36 @@ impl Header {
         }
     }
 
-    // TODO: rename this - this is more like creation from buffer
-    // TODO: have flags_half_1 constructor for this, and not return an input
-    pub fn read_u8(&mut self, buffer: &mut PacketBuffer) -> Result<()> {
-        // TODO: reset buffer pos?
-        self.id = buffer.read_u16()?;
+    // TODO: have flags_half_1 constructor for this - maybe call b1 and b2
+    pub fn from_buffer(buffer: &mut PacketBuffer) -> Result<Self> {
+        // NOTE: buffer pos must be at the start of the header
+
+        let mut header = Self::new();
+
+        header.id = buffer.read_u16()?;
 
         let flags = buffer.read_u16()?;
         let flags_half_1 = (flags >> 8) as u8;
         let flags_half_2 = (flags & 0xFF) as u8;
 
-        self.response = (flags_half_1 & (1 << 7)) > 0;
-        self.opcode = (flags_half_1 >> 3) & 0x0F; // TODO: can we instead shift 0x0F?
-        self.authoritative_answer = (flags_half_1 & (1 << 2)) > 0;
-        self.truncated_message = (flags_half_1 & (1 << 1)) > 0;
-        self.recursion_desired = (flags_half_1 & 1) > 0;
+        header.response = (flags_half_1 & (1 << 7)) > 0;
+        header.opcode = (flags_half_1 >> 3) & 0x0F; // TODO: can we instead shift 0x0F?
+        header.authoritative_answer = (flags_half_1 & (1 << 2)) > 0;
+        header.truncated_message = (flags_half_1 & (1 << 1)) > 0;
+        header.recursion_desired = (flags_half_1 & 1) > 0;
 
-        self.recursion_available = (flags_half_2 & (1 << 7)) > 0;
-        self.z = (flags_half_2 & (1 << 6)) > 0;
-        self.authenticated_data = (flags_half_2 & (1 << 5)) > 0;
-        self.checking_disabled = (flags_half_2 & (1 << 4)) > 0;
-        self.return_code = ReturnCode::from_num(flags_half_2 & 0x0F);
+        header.recursion_available = (flags_half_2 & (1 << 7)) > 0;
+        header.z = (flags_half_2 & (1 << 6)) > 0;
+        header.authenticated_data = (flags_half_2 & (1 << 5)) > 0;
+        header.checking_disabled = (flags_half_2 & (1 << 4)) > 0;
+        header.return_code = ReturnCode::from_num(flags_half_2 & 0x0F);
 
-        self.queries_total = buffer.read_u16()?;
-        self.answer_rr_total = buffer.read_u16()?;
-        self.authoritative_rr_total = buffer.read_u16()?;
-        self.additional_rr_total = buffer.read_u16()?;
+        header.queries_total = buffer.read_u16()?;
+        header.answer_rr_total = buffer.read_u16()?;
+        header.authoritative_rr_total = buffer.read_u16()?;
+        header.additional_rr_total = buffer.read_u16()?;
 
-        Ok(())
+        Ok(header)
     }
 
     // TODO: return the buffer and dont take it as an argument!

@@ -147,11 +147,15 @@ impl PacketBuffer {
 
             let label_len_limit = 63;
             if len > label_len_limit {
-                return Err(format!("Single label exceeds max length of {} characters", label_len_limit).into());
+                return Err(format!(
+                    "Single label exceeds max length of {} characters",
+                    label_len_limit
+                )
+                .into());
             }
 
             self.write_u8(len as u8)?;
-            
+
             for &b in label.as_bytes() {
                 self.write_u8(b)?;
             }

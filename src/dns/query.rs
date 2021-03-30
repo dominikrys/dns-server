@@ -8,6 +8,7 @@ pub struct Query {
     // TODO: do all these need to be pub?
     pub name: String,
     pub qtype: QueryType,
+    // Class not included as it's constant
 }
 
 impl Query {
@@ -15,15 +16,14 @@ impl Query {
         Self { name, qtype }
     }
 
-    pub fn read_u8(&mut self, buffer: &mut PacketBuffer) -> Result<()> {
-        // TODO: this assumes that the buffer position is at the start. Maybe we should set it explicitly
-        self.name = buffer.read_qname()?;
+    pub fn from_buffer(buffer: &mut PacketBuffer) -> Result<Query> {
+        // NOTE: buffer pos must be at the start of a query
 
-        self.qtype = QueryType::from_num(buffer.read_u16()?);
-        let _ = buffer.read_u16()?; // class
-                                    // TODO: do we keep the class?
+        let qname = buffer.read_qname()?;
+        let qtype = QueryType::from_num(buffer.read_u16()?);
+        let _class = buffer.read_u16()?;
 
-        Ok(())
+        Ok(Query::new(qname, qtype))
     }
 
     // TODO: return the buffer

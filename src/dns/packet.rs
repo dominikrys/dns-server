@@ -3,7 +3,6 @@ use std::net::Ipv4Addr;
 use super::header::Header;
 use super::packet_buffer::PacketBuffer;
 use super::query::Query;
-use super::query_type::QueryType;
 use super::resource_record::ResourceRecord;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -33,25 +32,24 @@ impl Packet {
 
     pub fn from_buffer(buffer: &mut PacketBuffer) -> Result<Packet> {
         let mut result = Packet::new();
-        result.header.read_u8(buffer)?;
+        result.header = Header::from_buffer(buffer)?;
 
         // TODO: can we tidy this repetition?
         for _ in 0..result.header.queries_total {
-            let mut query = Query::new("".to_string(), QueryType::UNKNOWN(0));
-            query.read_u8(buffer)?;
+            let query = Query::from_buffer(buffer)?;
             result.queries.push(query);
         }
 
         for _ in 0..result.header.answer_rr_total {
-            let record = ResourceRecord::read_u8(buffer)?;
+            let record = ResourceRecord::from_buffer(buffer)?;
             result.answer_records.push(record);
         }
         for _ in 0..result.header.authoritative_rr_total {
-            let record = ResourceRecord::read_u8(buffer)?;
+            let record = ResourceRecord::from_buffer(buffer)?;
             result.authoritative_records.push(record);
         }
         for _ in 0..result.header.additional_rr_total {
-            let record = ResourceRecord::read_u8(buffer)?;
+            let record = ResourceRecord::from_buffer(buffer)?;
             result.additional_records.push(record);
         }
 

@@ -49,8 +49,9 @@ pub enum ResourceRecord {
 }
 
 impl ResourceRecord {
-    pub fn read_u8(buffer: &mut PacketBuffer) -> Result<ResourceRecord> {
-        // TODO: this assumes that the PacketBuffer is at the start. Maybe reset it?
+    pub fn from_buffer(buffer: &mut PacketBuffer) -> Result<ResourceRecord> {
+        // NOTE: buffer pos must be at the start of a resource record
+
         let domain = buffer.read_qname()?;
 
         let qtype_num = buffer.read_u16()?;
