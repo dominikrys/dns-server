@@ -24,7 +24,7 @@ fn lookup(qname: &str, qtype: QueryType, server: (Ipv4Addr, u16)) -> Result<Pack
     packet.queries.push(Query::new(qname.to_string(), qtype));
 
     let mut req_buffer = PacketBuffer::new();
-    packet.write(&mut req_buffer)?;
+    packet.write_to_buffer(&mut req_buffer)?;
     socket.send_to(req_buffer.get_range(0, req_buffer.pos())?, server)?;
 
     let mut raw_res_buffer: [u8; 512] = [0; 512];
@@ -120,7 +120,7 @@ fn handle_query(socket: &UdpSocket) -> Result<()> {
     }
 
     let mut res_buffer = PacketBuffer::new();
-    packet.write(&mut res_buffer)?;
+    packet.write_to_buffer(&mut res_buffer)?;
 
     let len = res_buffer.pos();
     let data = res_buffer.get_range(0, len)?;

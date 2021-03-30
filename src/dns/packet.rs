@@ -7,11 +7,8 @@ use super::resource_record::ResourceRecord;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-// TODO: do we need both these traits?
-#[derive(Clone, Debug)]
-// TODO: maybe rename to just "packet"? and the other _dns stuff. Redundant since inside "DNS" module?
+#[derive(Clone)]
 pub struct Packet {
-    // TODO: should these all be pub?
     pub header: Header,
     pub queries: Vec<Query>,
     pub answer_records: Vec<ResourceRecord>,
@@ -31,34 +28,33 @@ impl Packet {
     }
 
     pub fn from_buffer(buffer: &mut PacketBuffer) -> Result<Packet> {
-        let mut result = Packet::new();
-        result.header = Header::from_buffer(buffer)?;
+        let mut packet = Packet::new();
+        packet.header = Header::from_buffer(buffer)?;
 
-        // TODO: can we tidy this repetition?
-        for _ in 0..result.header.queries_total {
+        for _ in 0..packet.header.queries_total {
             let query = Query::from_buffer(buffer)?;
-            result.queries.push(query);
+            packet.queries.push(query);
         }
 
-        for _ in 0..result.header.answer_rr_total {
+        for _ in 0..packet.header.answer_rr_total {
             let record = ResourceRecord::from_buffer(buffer)?;
-            result.answer_records.push(record);
+            packet.answer_records.push(record);
         }
-        for _ in 0..result.header.authoritative_rr_total {
+        for _ in 0..packet.header.authoritative_rr_total {
             let record = ResourceRecord::from_buffer(buffer)?;
-            result.authoritative_records.push(record);
+            packet.authoritative_records.push(record);
         }
-        for _ in 0..result.header.additional_rr_total {
+        for _ in 0..packet.header.additional_rr_total {
             let record = ResourceRecord::from_buffer(buffer)?;
-            result.additional_records.push(record);
+            packet.additional_records.push(record);
         }
 
-        Ok(result)
+        Ok(packet)
     }
 
-    // TODO: does self need to be mut?
-    // TODO: should this return buffer ot take it in as a reference?
-    pub fn write(&mut self, buffer: &mut PacketBuffer) -> Result<()> {
+    pub fn write_to_buffer(&mut self, buffer: &mut PacketBuffer) -> Result<()> {
+        buffer.seek(0);
+
         self.header.queries_total = self.queries.len() as u16;
         self.header.answer_rr_total = self.answer_records.len() as u16;
         self.header.authoritative_rr_total = self.authoritative_records.len() as u16;

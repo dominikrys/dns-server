@@ -3,7 +3,7 @@ use super::query_type::QueryType;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Query {
     // TODO: do all these need to be pub?
     pub name: String,

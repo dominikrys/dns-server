@@ -26,18 +26,17 @@ dig @127.0.0.1 -p 2053 www.google.com
 
 ## TODO
 
-- re-read all code and go through TODOs
-- make into lib and not bin?
-- refactor + naming
-  - no side effects
+- re-read all code
+  - go through TODOs
+  - refactor + naming
   - unambiguous and consistent names e.g. domain and host
-  - add comments if really necessary
   - utilise the result type for returning values and errors
   - sort out directory structure
     - should we include more stuff in one file?
     - alternatively, is there a way to reduce the amount of `use super::*`?
     - maybe use [`pub use`](https://www.reddit.com/r/rust/comments/6x49mu/what_are_some_rules_of_thumb_for_use/dmd07yr?utm_source=share&utm_medium=web2x&context=3)?
   - are the file names correct?
+- make into lib and not bin?
 - add tests?
   - maybe just important ones if necessary
 - Extra nice stuff:

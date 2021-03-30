@@ -6,8 +6,7 @@ use super::query_type::QueryType;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-// TODO: see if all these traits are needed
-#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum ResourceRecord {
     // TODO: do we need an unknown record?
     // TODO: can we include the integer within these?

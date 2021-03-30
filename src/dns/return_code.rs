@@ -1,5 +1,4 @@
-// TODO: see if all these traits are needed
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum ReturnCode {
     NOERROR = 0,
     FORMERR = 1,

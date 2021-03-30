@@ -1,5 +1,4 @@
-// TODO: see if all these traits are needed
-#[derive(PartialEq, Eq, Debug, Clone, Hash, Copy)]
+#[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum QueryType {
     // TODO: can we assign values to all of these?
     UNKNOWN(u16), // TODO: does unknown need to take a value?
