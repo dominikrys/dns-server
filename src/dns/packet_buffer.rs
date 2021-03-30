@@ -32,7 +32,7 @@ impl PacketBuffer {
 
     fn check_end_of_buf(&self, pos: usize) -> Result<()> {
         if pos >= self.buf.len() {
-            return Err("End of buffer".into());
+            return Err(format!("Pos {} exceeds size {} of buffer", pos, BUF_SIZE).into());
         }
 
         Ok(())
@@ -67,57 +67,51 @@ impl PacketBuffer {
 
     pub fn read_qname(&mut self) -> Result<String> {
         let mut qname = String::new();
+        let mut pos = self.pos();
 
-        let mut pos = self.pos(); // TODO: maybe make more obvious that this is local
-
-        let mut jumped = false;
-        let max_jumps = 5;
         let mut jumps_performed = 0;
-
-        let mut delim = "";
+        let max_jumps = 5; // Guard against cycles
 
         loop {
             if jumps_performed > max_jumps {
                 return Err(format!("Limit of {} jumps exceeded", max_jumps).into());
             }
 
-            let len = self.get(pos)?; // TODO: rename to label_len
+            let label_len = self.get(pos)?;
 
             // Check if the two most significant bits are set: https://docstore.mik.ua/orelly/networking_2ndEd/dns/ch15_02.htm
             let two_msb_mask = 0xC0;
-
-            if (len & two_msb_mask) == two_msb_mask {
-                // TODO: get rid of these parentheses
-                if !jumped {
-                    // TODO: explain that we're adding 2 because the len field is 2 bytes in size
-                    self.seek(pos + 2); // TODO: can we use len to seek here? Seeking to pos isn't very intuitive
+            if (label_len & two_msb_mask) == two_msb_mask {
+                if jumps_performed == 0 {
+                    // Advance past the current label
+                    self.seek(pos + std::mem::size_of::<u16>());
                 }
 
-                let b2 = self.get(pos + 1)? as u16; // TODO: rename to "next_byte". This is the next byte of the length
-                let offset = (((len as u16) ^ two_msb_mask as u16) << 8) | b2;
+                let offset_b1 = (label_len as u16) ^ (two_msb_mask as u16);
+                let offset_b2 = self.get(pos + 1)? as u16;
+                let offset = (offset_b1 << 8) | offset_b2;
                 pos = offset as usize;
 
-                jumped = true;
                 jumps_performed += 1;
             } else {
                 pos += 1;
 
-                if len == 0 {
+                if label_len == 0 {
                     break;
                 }
 
-                qname.push_str(delim);
+                if !qname.is_empty() {
+                    qname.push_str(".");
+                }
 
-                let str_buffer = self.get_range(pos, len as usize)?;
-                qname.push_str(&String::from_utf8_lossy(str_buffer).to_lowercase()); // TODO: try without lossy, then fall back to lossy if it fails
+                let str_buffer = self.get_range(pos, label_len as usize)?;
+                qname.push_str(&String::from_utf8_lossy(str_buffer).to_lowercase());
 
-                delim = "."; // TODO: do delim more cleanly
-
-                pos += len as usize;
+                pos += label_len as usize;
             }
         }
 
-        if !jumped {
+        if jumps_performed == 0 {
             self.seek(pos);
         }
 
