@@ -1,38 +1,38 @@
+// NOTE: ideally we would use the num-derive crate and we'd provide explicit discriminants
+// to the enum from nightly Rust (RFC 2363), but the features don't inter-work. Using nested
+// enums and num-derive also ended up being quite convoluted, so the code is a bit verbose.
+
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
+#[repr(u16)]
 pub enum QueryType {
-    // TODO: can we assign values to all of these?
-    UNKNOWN(u16), // TODO: does unknown need to take a value?
-    A,            // 1
-    NS,           // 2
-    CNAME,        // 5
-    MX,           // 15
-    AAAA,         // 28
+    UNKNOWN(u16),
+    A,
+    NS,
+    CNAME,
+    MX,
+    AAAA,
 }
 
 impl QueryType {
     pub fn to_num(&self) -> u16 {
-        // TODO: can we get rid of the *?
-        // TODO: do we even need this?
         match *self {
-            QueryType::UNKNOWN(x) => x,
-            QueryType::A => 1,
-            QueryType::NS => 2,
-            QueryType::CNAME => 5,
-            QueryType::MX => 15,
-            QueryType::AAAA => 28,
+            Self::A => 1,
+            Self::NS => 2,
+            Self::CNAME => 5,
+            Self::MX => 15,
+            Self::AAAA => 28,
+            Self::UNKNOWN(x) => x,
         }
     }
 
-    // TODO: maybe use num-derive crate instead
-    // https://enodev.fr/posts/rusticity-convert-an-integer-to-an-enum.html
     pub fn from_num(num: u16) -> Self {
         match num {
-            1 => QueryType::A,
-            2 => QueryType::NS,
-            5 => QueryType::CNAME,
-            15 => QueryType::MX,
-            28 => QueryType::AAAA,
-            _ => QueryType::UNKNOWN(num),
+            1 => Self::A,
+            2 => Self::NS,
+            5 => Self::CNAME,
+            15 => Self::MX,
+            28 => Self::AAAA,
+            _ => Self::UNKNOWN(num),
         }
     }
 }
