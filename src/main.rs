@@ -96,7 +96,7 @@ fn handle_query(socket: &UdpSocket) -> Result<()> {
     if let Some(query) = request.queries.pop() {
         println!("Received query: {:?}", query);
 
-        if let Ok(result) = recursive_lookup(&query.name, query.qtype) {
+        if let Ok(result) = recursive_lookup(&query.qname, query.qtype) {
             packet.queries.push(query);
             packet.header.return_code = result.header.return_code;
 

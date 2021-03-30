@@ -5,20 +5,22 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Query {
-    // TODO: do all these need to be pub?
-    pub name: String,
+    pub qname: String,
     pub qtype: QueryType,
-    // Class not included as it's constant
+    class: u16,
 }
 
 impl Query {
-    pub fn new(name: String, qtype: QueryType) -> Self {
-        Self { name, qtype }
+    pub fn new(qname: String, qtype: QueryType) -> Self {
+        Self {
+            qname,
+            qtype,
+            class: 1,
+        }
     }
 
     pub fn from_buffer(buffer: &mut PacketBuffer) -> Result<Query> {
         // NOTE: buffer pos must be at the start of a query
-
         let qname = buffer.read_qname()?;
         let qtype = QueryType::from_num(buffer.read_u16()?);
         let _class = buffer.read_u16()?;
@@ -27,11 +29,10 @@ impl Query {
     }
 
     pub fn write_to_buffer(&self, buffer: &mut PacketBuffer) -> Result<()> {
-        buffer.write_qname(&self.name)?;
-
-        let type_num = self.qtype.to_num();
-        buffer.write_u16(type_num)?;
-        buffer.write_u16(1)?; // Class
+        // NOTE: this method will write at the current buffer position
+        buffer.write_qname(&self.qname)?;
+        buffer.write_u16(self.qtype.to_num())?;
+        buffer.write_u16(self.class)?;
 
         Ok(())
     }

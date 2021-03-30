@@ -28,6 +28,7 @@ dig @127.0.0.1 -p 2053 www.google.com
 
 - re-read all code
   - go through TODOs
+  - write at the current buffer position stuff invariant or clarify better?
   - refactor + naming
   - unambiguous and consistent names e.g. domain and host
   - utilise the result type for returning values and errors

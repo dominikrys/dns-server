@@ -82,6 +82,7 @@ impl Header {
     }
 
     pub fn write_to_buffer(&self, buffer: &mut PacketBuffer) -> Result<()> {
+        // NOTE: this method will write at the current buffer position
         buffer.write_u16(self.id)?;
 
         let mut flags_b1 = (self.response as u8) << 7;
