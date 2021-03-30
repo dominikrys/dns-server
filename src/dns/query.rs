@@ -15,7 +15,7 @@ impl Query {
         Self {
             qname,
             qtype,
-            class: 1,
+            class: 1, // IN (Internet)
         }
     }
 

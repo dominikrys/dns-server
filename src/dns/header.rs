@@ -71,7 +71,7 @@ impl Header {
         header.z = (flags_b2 & (1 << 6)) > 0;
         header.authenticated_data = (flags_b2 & (1 << 5)) > 0;
         header.checking_disabled = (flags_b2 & (1 << 4)) > 0;
-        header.return_code = ReturnCode::from_num(flags_b2 & 0x0F);
+        header.return_code = num::FromPrimitive::from_u8(flags_b2 & 0x0F).unwrap();
 
         header.queries_total = buffer.read_u16()?;
         header.answer_rr_total = buffer.read_u16()?;
