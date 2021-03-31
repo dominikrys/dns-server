@@ -45,7 +45,6 @@ pub enum ResourceRecord {
 
 impl ResourceRecord {
     pub fn from_buffer(buffer: &mut PacketBuffer) -> Result<ResourceRecord> {
-        // NOTE: buffer pos must be at the start of a resource record
         let domain = buffer.read_compressed_name()?;
 
         let qtype_num = buffer.read_u16()?;
@@ -160,7 +159,6 @@ impl ResourceRecord {
     }
 
     pub fn write_to_buffer(&self, buffer: &mut PacketBuffer) -> Result<()> {
-        // NOTE: this method will write at the current buffer position
         match *self {
             ResourceRecord::A {
                 ref domain,

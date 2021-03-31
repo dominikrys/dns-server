@@ -83,10 +83,9 @@ impl PacketBuffer {
 
             let label_len = self.get(pos)?;
 
-            // Check if the two most significant bits are set:
-            // https://docstore.mik.ua/orelly/networking_2ndEd/dns/ch15_02.htm
             let two_msb_mask = 0xC0;
-            if (label_len & two_msb_mask) == two_msb_mask {
+            let pointer = (label_len & two_msb_mask) == two_msb_mask;
+            if pointer {
                 if jumps_performed == 0 {
                     // Advance past the current label
                     self.seek(pos + std::mem::size_of::<u16>());

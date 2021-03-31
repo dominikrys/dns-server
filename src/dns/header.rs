@@ -52,7 +52,6 @@ impl Header {
     }
 
     pub fn from_buffer(buffer: &mut PacketBuffer) -> Result<Self> {
-        // NOTE: buffer pos must be at the start of the header
         let mut header = Self::new();
 
         header.id = buffer.read_u16()?;
@@ -82,7 +81,6 @@ impl Header {
     }
 
     pub fn write_to_buffer(&self, buffer: &mut PacketBuffer) -> Result<()> {
-        // NOTE: this method will write at the current buffer position
         buffer.write_u16(self.id)?;
 
         let mut flags_b1 = (self.response as u8) << 7;

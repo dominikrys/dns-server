@@ -27,9 +27,6 @@ dig @127.0.0.1 -p 2053 www.google.com
 ## TODO
 
 - refactor code
-  - search // and make sure all comments make sense
-  - write at the current buffer position stuff invariant or clarify better?
-  - utilise the result type for returning values and errors
   - sort out directory structure
     - should we include more stuff in one file? protocol, buffer, server
     - alternatively, is there a way to reduce the amount of `use super::*`?
@@ -39,6 +36,7 @@ dig @127.0.0.1 -p 2053 www.google.com
   - are the file names correct?
 - make into lib and not bin?
 - add important tests
+- Make `write_to_buffer` and `from_buffer` methods not rely on the current buffer position
 - Extra functionality:
   - Concurrency
   - TCP connections

@@ -53,8 +53,6 @@ impl Packet {
     }
 
     pub fn write_to_buffer(&mut self, buffer: &mut PacketBuffer) -> Result<()> {
-        buffer.seek(0);
-
         self.header.queries_total = self.queries.len() as u16;
         self.header.answer_rr_total = self.answer_records.len() as u16;
         self.header.authoritative_rr_total = self.authoritative_records.len() as u16;
