@@ -4,10 +4,7 @@ use super::query::Query;
 use super::query_type::QueryType;
 use super::return_code::ReturnCode;
 
-use std::net::IpAddr;
-use std::net::Ipv4Addr;
-use std::net::SocketAddr;
-use std::net::UdpSocket;
+use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 

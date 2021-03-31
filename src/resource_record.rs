@@ -1,5 +1,4 @@
-use std::net::Ipv4Addr;
-use std::net::Ipv6Addr;
+use std::net::{Ipv4Addr, Ipv6Addr};
 
 use super::packet_buffer::PacketBuffer;
 use super::query::INTERNET_CLASS;
