@@ -155,14 +155,11 @@ impl ResourceRecord {
             } => {
                 self.write_common_fields(buffer, domain, QueryType::A, ttl)?;
 
-                buffer.write_u16(4)?; // 4 IPv4 octets
+                buffer.write_u16(ip_addr.octets().len() as u16)?;
 
-                // TODO: do a loop for this
-                let octets = ip_addr.octets();
-                buffer.write_u8(octets[0])?;
-                buffer.write_u8(octets[1])?;
-                buffer.write_u8(octets[2])?;
-                buffer.write_u8(octets[3])?;
+                for octet in &ip_addr.octets() {
+                    buffer.write_u8(*octet)?;
+                }
             }
             ResourceRecord::NS {
                 ref domain,
@@ -224,10 +221,10 @@ impl ResourceRecord {
             } => {
                 self.write_common_fields(buffer, domain, QueryType::AAAA, ttl)?;
 
-                buffer.write_u16(16)?; // 16 IPv6 octets
+                buffer.write_u16(ip_addr.octets().len() as u16)?;
 
-                for octet in &ip_addr.segments() {
-                    buffer.write_u16(*octet)?;
+                for segment_u16 in &ip_addr.segments() {
+                    buffer.write_u16(*segment_u16)?;
                 }
             }
             ResourceRecord::UNKNOWN { .. } => {
