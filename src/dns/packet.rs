@@ -117,7 +117,7 @@ impl Packet {
             .next()
     }
 
-    pub fn get_some_ns_host<'a>(&'a self, qname: &'a str) -> Option<&'a str> {
+    pub fn get_first_ns_host<'a>(&'a self, qname: &'a str) -> Option<&'a str> {
         self.get_ns_iter(qname).map(|(_, host)| host).next()
     }
 }

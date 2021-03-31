@@ -32,7 +32,11 @@ impl PacketBuffer {
 
     fn check_end_of_buf(&self, pos: usize) -> Result<()> {
         if pos >= self.buf.len() {
-            return Err(format!("Pos {} exceeds size {} of buffer", pos, BUF_SIZE).into());
+            return Err(format!(
+                "Position of buffer {} exceeds max size of {}",
+                pos, BUF_SIZE
+            )
+            .into());
         }
 
         Ok(())

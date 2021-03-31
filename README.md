@@ -28,6 +28,7 @@ dig @127.0.0.1 -p 2053 www.google.com
 
 - re-read all code
   - go through TODOs
+  - search // and make sure all comments make sense
   - write at the current buffer position stuff invariant or clarify better?
   - refactor + naming
   - unambiguous and consistent names e.g. domain and host
@@ -43,6 +44,7 @@ dig @127.0.0.1 -p 2053 www.google.com
 - Extra nice stuff:
   - Concurrency
   - TCP connections
+  - Support replies larger than 512B
   - Resolve using other servers than a root servers
   - Host our own zones? Allow to act a authoritative server?
   - DNSSEC?
