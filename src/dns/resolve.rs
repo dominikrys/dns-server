@@ -4,13 +4,22 @@ use super::query::Query;
 use super::query_type::QueryType;
 use super::return_code::ReturnCode;
 
+use std::net::IpAddr;
 use std::net::Ipv4Addr;
 use std::net::UdpSocket;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-fn lookup(qname: &str, qtype: QueryType, server: (Ipv4Addr, u16)) -> Result<Packet> {
-    // Send request to server TODO: refactor this into its own method as it's shared
+fn send_packet(mut packet: Packet, socket: &UdpSocket, dst_socket: &(IpAddr, u16)) -> Result<()> {
+    let mut buf = PacketBuffer::new();
+    packet.write_to_buffer(&mut buf)?;
+
+    socket.send_to(buf.get_range(0, buf.pos())?, dst_socket)?;
+
+    Ok(())
+}
+
+fn lookup(qname: &str, qtype: QueryType, server: (IpAddr, u16)) -> Result<Packet> {
     let socket = UdpSocket::bind(("0.0.0.0", 43210))?;
 
     let mut packet = Packet::new();
@@ -19,9 +28,7 @@ fn lookup(qname: &str, qtype: QueryType, server: (Ipv4Addr, u16)) -> Result<Pack
     packet.header.recursion_desired = true;
     packet.queries.push(Query::new(qname.to_string(), qtype));
 
-    let mut req_buffer = PacketBuffer::new();
-    packet.write_to_buffer(&mut req_buffer)?;
-    socket.send_to(req_buffer.get_range(0, req_buffer.pos())?, server)?;
+    send_packet(packet, &socket, &server)?;
 
     // Get reply from server TODO: refactor this into its own method as it's shared
     let mut raw_res_buffer: [u8; 512] = [0; 512];
@@ -33,7 +40,7 @@ fn lookup(qname: &str, qtype: QueryType, server: (Ipv4Addr, u16)) -> Result<Pack
 
 fn recursive_lookup(qname: &str, qtype: QueryType) -> Result<Packet> {
     let a_root_servers_net_ip = "198.41.0.4";
-    let mut ns = a_root_servers_net_ip.parse::<Ipv4Addr>().unwrap();
+    let mut ns = IpAddr::V4(a_root_servers_net_ip.parse::<Ipv4Addr>().unwrap());
 
     loop {
         println!("Performing lookup of {:?} {} with ns {}", qtype, qname, ns);
@@ -53,7 +60,7 @@ fn recursive_lookup(qname: &str, qtype: QueryType) -> Result<Packet> {
 
         // Try to resolve NS from additional records
         if let Some(new_ns) = response.get_ns_from_additional_records(qname) {
-            ns = new_ns;
+            ns = IpAddr::V4(new_ns);
             continue;
         }
 
@@ -69,7 +76,7 @@ fn recursive_lookup(qname: &str, qtype: QueryType) -> Result<Packet> {
 
         // Pick an IP from the result, and recurse. Otherwise return last result.
         if let Some(new_ns) = recursive_response.get_first_a_record() {
-            ns = new_ns;
+            ns = IpAddr::V4(new_ns);
         } else {
             return Ok(response);
         }
@@ -79,11 +86,10 @@ fn recursive_lookup(qname: &str, qtype: QueryType) -> Result<Packet> {
 pub fn handle_query(socket: &UdpSocket) -> Result<()> {
     // Get request TODO: refactor this into its own method as it's shared
     let mut raw_req_buffer: [u8; 512] = [0; 512];
-    let (_, req_src_ip) = socket.recv_from(&mut raw_req_buffer)?;
+    let (_, src_socket) = socket.recv_from(&mut raw_req_buffer)?;
     let mut req_buffer = PacketBuffer::from_u8_array(raw_req_buffer);
     let request = Packet::from_buffer(&mut req_buffer)?;
 
-    // Prepare reply
     let mut res_packet = Packet::new();
     res_packet.header.id = request.header.id;
     res_packet.header.recursion_desired = true;
@@ -119,13 +125,7 @@ pub fn handle_query(socket: &UdpSocket) -> Result<()> {
         }
     }
 
-    // Send reply TODO: refactor this into its own method as it's shared
-    let mut res_buffer = PacketBuffer::new();
-    res_packet.write_to_buffer(&mut res_buffer)?;
-
-    let res_len = res_buffer.pos();
-    let res_data = res_buffer.get_range(0, res_len)?;
-    socket.send_to(res_data, req_src_ip)?;
+    send_packet(res_packet, socket, &(src_socket.ip(), src_socket.port()))?;
 
     Ok(())
 }
