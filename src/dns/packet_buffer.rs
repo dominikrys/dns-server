@@ -70,7 +70,7 @@ impl PacketBuffer {
     }
 
     pub fn read_compressed_name(&mut self) -> Result<String> {
-        let mut qname = String::new();
+        let mut name = String::new();
         let mut pos = self.pos();
 
         let mut jumps_performed = 0;
@@ -105,12 +105,12 @@ impl PacketBuffer {
                     break;
                 }
 
-                if !qname.is_empty() {
-                    qname.push('.');
+                if !name.is_empty() {
+                    name.push('.');
                 }
 
                 let str_buffer = self.get_range(pos, label_len as usize)?;
-                qname.push_str(&String::from_utf8_lossy(str_buffer).to_lowercase());
+                name.push_str(&String::from_utf8_lossy(str_buffer).to_lowercase());
 
                 pos += label_len as usize;
             }
@@ -120,7 +120,7 @@ impl PacketBuffer {
             self.seek(pos);
         }
 
-        Ok(qname)
+        Ok(name)
     }
 
     pub fn write_u8(&mut self, val: u8) -> Result<()> {
@@ -146,8 +146,8 @@ impl PacketBuffer {
         Ok(())
     }
 
-    pub fn write_compressed_name(&mut self, qname: &str) -> Result<()> {
-        for label in qname.split('.') {
+    pub fn write_compressed_name(&mut self, name: &str) -> Result<()> {
+        for label in name.split('.') {
             let len = label.len();
 
             let label_len_limit = 63;

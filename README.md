@@ -26,12 +26,9 @@ dig @127.0.0.1 -p 2053 www.google.com
 
 ## TODO
 
-- re-read all code
-  - go through TODOs
+- refactor code
   - search // and make sure all comments make sense
   - write at the current buffer position stuff invariant or clarify better?
-  - refactor + naming
-  - unambiguous and consistent names e.g. domain and host
   - utilise the result type for returning values and errors
   - sort out directory structure
     - should we include more stuff in one file? protocol, buffer, server
@@ -41,9 +38,8 @@ dig @127.0.0.1 -p 2053 www.google.com
     - also check if everything in `mod.rs` needs to be pub
   - are the file names correct?
 - make into lib and not bin?
-- add tests?
-  - maybe just important ones if necessary
-- Extra nice stuff:
+- add important tests
+- Extra functionality:
   - Concurrency
   - TCP connections
   - Support replies larger than 512B

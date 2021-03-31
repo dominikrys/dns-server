@@ -21,7 +21,7 @@ impl QueryType {
             Self::CNAME => 5,
             Self::MX => 15,
             Self::AAAA => 28,
-            Self::UNKNOWN(x) => x,
+            Self::UNKNOWN(num) => num,
         }
     }
 
