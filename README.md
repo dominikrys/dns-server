@@ -37,6 +37,8 @@ dig @127.0.0.1 -p 2053 www.google.com
     - should we include more stuff in one file? protocol, buffer, server
     - alternatively, is there a way to reduce the amount of `use super::*`?
     - maybe use [`pub use`](https://www.reddit.com/r/rust/comments/6x49mu/what_are_some_rules_of_thumb_for_use/dmd07yr?utm_source=share&utm_medium=web2x&context=3)?
+    - does `mod dns` do anything?
+    - also check if everything in `mod.rs` needs to be pub
   - are the file names correct?
 - make into lib and not bin?
 - add tests?
