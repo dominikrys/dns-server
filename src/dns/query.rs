@@ -3,6 +3,8 @@ use super::query_type::QueryType;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
+pub const INTERNET_CLASS: u16 = 1;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Query {
     pub qname: String,
@@ -15,7 +17,7 @@ impl Query {
         Self {
             qname,
             qtype,
-            class: 1, // IN (Internet)
+            class: INTERNET_CLASS,
         }
     }
 

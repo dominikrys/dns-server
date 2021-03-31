@@ -2,6 +2,7 @@ use std::net::Ipv4Addr;
 use std::net::Ipv6Addr;
 
 use super::packet_buffer::PacketBuffer;
+use super::query::INTERNET_CLASS;
 use super::query_type::QueryType;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -127,23 +128,36 @@ impl ResourceRecord {
         }
     }
 
+    fn write_common_fields(
+        &self,
+        buffer: &mut PacketBuffer,
+        domain: &str,
+        qtype: QueryType,
+        ttl: u32,
+    ) -> Result<()> {
+        buffer.write_qname(domain)?;
+        buffer.write_u16(qtype.to_num())?;
+        buffer.write_u16(INTERNET_CLASS)?;
+        buffer.write_u32(ttl)?;
+
+        Ok(())
+    }
+
     pub fn write_to_buffer(&self, buffer: &mut PacketBuffer) -> Result<usize> {
         // NOTE: this method will write at the current buffer position
         let start_pos = buffer.pos();
 
-        // TODO: see if i can tidy this a bit
         match *self {
             ResourceRecord::A {
                 ref domain,
                 ref ip_addr,
                 ttl,
             } => {
-                buffer.write_qname(domain)?;
-                buffer.write_u16(QueryType::A.to_num())?;
-                buffer.write_u16(1)?; // Class
-                buffer.write_u32(ttl)?;
+                self.write_common_fields(buffer, domain, QueryType::A, ttl)?;
+
                 buffer.write_u16(4)?; // 4 IPv4 octets
 
+                // TODO: do a loop for this
                 let octets = ip_addr.octets();
                 buffer.write_u8(octets[0])?;
                 buffer.write_u8(octets[1])?;
@@ -155,14 +169,9 @@ impl ResourceRecord {
                 ref host,
                 ttl,
             } => {
-                // TODO: lots of this is common. Can we compress it?
-                buffer.write_qname(domain)?;
-                buffer.write_u16(QueryType::NS.to_num())?;
-                buffer.write_u16(1)?; // Class
-                buffer.write_u32(ttl)?;
+                self.write_common_fields(buffer, domain, QueryType::NS, ttl)?;
 
                 // TODO: can we do pos after writing 0 so we don't need to -2?
-                // TODO: can this code be extracted since it;s common?
                 let pos = buffer.pos();
                 buffer.write_u16(0)?;
 
@@ -177,10 +186,7 @@ impl ResourceRecord {
                 ref cname,
                 ttl,
             } => {
-                buffer.write_qname(domain)?;
-                buffer.write_u16(QueryType::CNAME.to_num())?;
-                buffer.write_u16(1)?; // Class
-                buffer.write_u32(ttl)?;
+                self.write_common_fields(buffer, domain, QueryType::CNAME, ttl)?;
 
                 // TODO: can we do pos after writing 0 so we don't need to -2?
                 let pos = buffer.pos();
@@ -198,10 +204,7 @@ impl ResourceRecord {
                 ref exchange,
                 ttl,
             } => {
-                buffer.write_qname(domain)?;
-                buffer.write_u16(QueryType::MX.to_num())?;
-                buffer.write_u16(1)?; // Class
-                buffer.write_u32(ttl)?;
+                self.write_common_fields(buffer, domain, QueryType::MX, ttl)?;
 
                 // TODO: can we do pos after writing 0 so we don't need to -2?
                 let pos = buffer.pos();
@@ -219,10 +222,8 @@ impl ResourceRecord {
                 ref ip_addr,
                 ttl,
             } => {
-                buffer.write_qname(domain)?;
-                buffer.write_u16(QueryType::AAAA.to_num())?;
-                buffer.write_u16(1)?; // Class
-                buffer.write_u32(ttl)?;
+                self.write_common_fields(buffer, domain, QueryType::AAAA, ttl)?;
+
                 buffer.write_u16(16)?; // 16 IPv6 octets
 
                 for octet in &ip_addr.segments() {
