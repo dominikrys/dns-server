@@ -65,7 +65,7 @@ impl PacketBuffer {
         Ok(((self.read_u16()? as u32) << 16) | (self.read_u16()? as u32))
     }
 
-    pub fn read_qname(&mut self) -> Result<String> {
+    pub fn read_compressed_name(&mut self) -> Result<String> {
         let mut qname = String::new();
         let mut pos = self.pos();
 
@@ -79,7 +79,8 @@ impl PacketBuffer {
 
             let label_len = self.get(pos)?;
 
-            // Check if the two most significant bits are set: https://docstore.mik.ua/orelly/networking_2ndEd/dns/ch15_02.htm
+            // Check if the two most significant bits are set:
+            // https://docstore.mik.ua/orelly/networking_2ndEd/dns/ch15_02.htm
             let two_msb_mask = 0xC0;
             if (label_len & two_msb_mask) == two_msb_mask {
                 if jumps_performed == 0 {
@@ -141,7 +142,7 @@ impl PacketBuffer {
         Ok(())
     }
 
-    pub fn write_qname(&mut self, qname: &str) -> Result<()> {
+    pub fn write_compressed_name(&mut self, qname: &str) -> Result<()> {
         for label in qname.split('.') {
             let len = label.len();
 
@@ -160,6 +161,21 @@ impl PacketBuffer {
         }
 
         self.write_u8(0)?; // Null terminate the name
+
+        Ok(())
+    }
+
+    fn set_u8(&mut self, pos: usize, val: u8) -> Result<()> {
+        self.check_end_of_buf(pos)?;
+
+        self.buf[pos] = val;
+
+        Ok(())
+    }
+
+    pub fn set_u16(&mut self, pos: usize, val: u16) -> Result<()> {
+        self.set_u8(pos, (val >> 8) as u8)?;
+        self.set_u8(pos + 1, (val & 0xFF) as u8)?;
 
         Ok(())
     }

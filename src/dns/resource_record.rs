@@ -46,7 +46,7 @@ pub enum ResourceRecord {
 impl ResourceRecord {
     pub fn from_buffer(buffer: &mut PacketBuffer) -> Result<ResourceRecord> {
         // NOTE: buffer pos must be at the start of a resource record
-        let domain = buffer.read_qname()?;
+        let domain = buffer.read_compressed_name()?;
 
         let qtype_num = buffer.read_u16()?;
         let qtype = QueryType::from_num(qtype_num);
@@ -95,18 +95,18 @@ impl ResourceRecord {
                 })
             }
             QueryType::NS => {
-                let host = buffer.read_qname()?;
+                let host = buffer.read_compressed_name()?;
 
                 Ok(ResourceRecord::NS { domain, host, ttl })
             }
             QueryType::CNAME => {
-                let cname = buffer.read_qname()?;
+                let cname = buffer.read_compressed_name()?;
 
                 Ok(ResourceRecord::CNAME { domain, cname, ttl })
             }
             QueryType::MX => {
                 let priority = buffer.read_u16()?;
-                let exchange = buffer.read_qname()?;
+                let exchange = buffer.read_compressed_name()?;
 
                 Ok(ResourceRecord::MX {
                     domain,
@@ -135,7 +135,7 @@ impl ResourceRecord {
         qtype: QueryType,
         ttl: u32,
     ) -> Result<()> {
-        buffer.write_qname(domain)?;
+        buffer.write_compressed_name(domain)?;
         buffer.write_u16(qtype.to_num())?;
         buffer.write_u16(INTERNET_CLASS)?;
         buffer.write_u32(ttl)?;
@@ -143,10 +143,24 @@ impl ResourceRecord {
         Ok(())
     }
 
-    pub fn write_to_buffer(&self, buffer: &mut PacketBuffer) -> Result<usize> {
-        // NOTE: this method will write at the current buffer position
-        let start_pos = buffer.pos();
+    fn write_compressed_name_with_size(&self, buffer: &mut PacketBuffer, name: &str) -> Result<()> {
+        // Skip over size field
+        let name_size_field_len = 2;
+        buffer.step(name_size_field_len);
 
+        // Write name and get its size
+        let name_start_pos = buffer.pos();
+        buffer.write_compressed_name(name)?;
+        let name_size = buffer.pos() - name_start_pos;
+
+        // Write previously skipped size field
+        buffer.set_u16(name_start_pos - name_size_field_len, name_size as u16)?;
+
+        Ok(())
+    }
+
+    pub fn write_to_buffer(&self, buffer: &mut PacketBuffer) -> Result<()> {
+        // NOTE: this method will write at the current buffer position
         match *self {
             ResourceRecord::A {
                 ref domain,
@@ -168,15 +182,7 @@ impl ResourceRecord {
             } => {
                 self.write_common_fields(buffer, domain, QueryType::NS, ttl)?;
 
-                // TODO: can we do pos after writing 0 so we don't need to -2?
-                let pos = buffer.pos();
-                buffer.write_u16(0)?;
-
-                buffer.write_qname(host)?;
-
-                let size = buffer.pos() - (pos - 2);
-                buffer.seek(pos);
-                buffer.write_u16(size as u16)?;
+                self.write_compressed_name_with_size(buffer, host)?;
             }
             ResourceRecord::CNAME {
                 ref domain,
@@ -185,15 +191,7 @@ impl ResourceRecord {
             } => {
                 self.write_common_fields(buffer, domain, QueryType::CNAME, ttl)?;
 
-                // TODO: can we do pos after writing 0 so we don't need to -2?
-                let pos = buffer.pos();
-                buffer.write_u16(0)?;
-
-                buffer.write_qname(cname)?;
-
-                let size = buffer.pos() - (pos + 2);
-                buffer.seek(pos);
-                buffer.write_u16(size as u16)?;
+                self.write_compressed_name_with_size(buffer, cname)?;
             }
             ResourceRecord::MX {
                 ref domain,
@@ -203,16 +201,18 @@ impl ResourceRecord {
             } => {
                 self.write_common_fields(buffer, domain, QueryType::MX, ttl)?;
 
-                // TODO: can we do pos after writing 0 so we don't need to -2?
-                let pos = buffer.pos();
-                buffer.write_u16(0)?;
+                // Skip over size field
+                let name_size_field_len = 2;
+                buffer.step(name_size_field_len);
 
+                // Write name and get its size
+                let name_start_pos = buffer.pos();
                 buffer.write_u16(priority)?;
-                buffer.write_qname(exchange)?;
+                buffer.write_compressed_name(exchange)?;
+                let name_size = buffer.pos() - name_start_pos;
 
-                let size = buffer.pos() - (pos + 2);
-                buffer.seek(pos);
-                buffer.write_u16(size as u16)?;
+                // Write previously skipped size field
+                buffer.set_u16(name_start_pos - name_size_field_len, name_size as u16)?;
             }
             ResourceRecord::AAAA {
                 ref domain,
@@ -232,7 +232,6 @@ impl ResourceRecord {
             }
         }
 
-        // TODO: why are we returning the size?
-        Ok(buffer.pos() - start_pos)
+        Ok(())
     }
 }
