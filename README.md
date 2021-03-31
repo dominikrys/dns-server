@@ -43,6 +43,7 @@ dig @127.0.0.1 -p 2053 www.google.com
 - Extra nice stuff:
   - Concurrency
   - TCP connections
+  - Resolve using other servers than a root servers
   - Host our own zones? Allow to act a authoritative server?
   - DNSSEC?
   - Add SOA records?

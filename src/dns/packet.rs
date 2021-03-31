@@ -88,9 +88,7 @@ impl Packet {
             .next()
     }
 
-    // TODO: read through the next two functions properly: https://github.com/EmilHernvall/dnsguide/blob/master/chapter5.md
-
-    // TODO: make return type obvious that they're a domain and host
+    // Returns iterator over domain and host
     fn get_ns_iter<'a>(&'a self, qname: &'a str) -> impl Iterator<Item = (&'a str, &'a str)> {
         self.authoritative_records
             .iter()
@@ -98,14 +96,11 @@ impl Packet {
                 ResourceRecord::NS { domain, host, .. } => Some((domain.as_str(), host.as_str())),
                 _ => None,
             })
-            // Discard servers which aren't authoritative to our query
-            // TODO: make this cleaner
+            // Only include servers authoritative to the query
             .filter(move |(domain, _)| qname.ends_with(*domain))
     }
 
     pub fn get_ns_from_additional_records(&self, qname: &str) -> Option<Ipv4Addr> {
-        // TODO: implement out of bailiwick check: https://www.farsightsecurity.com/blog/txt-record/what-is-a-bailiwick-20170321
-        // TODO: otherwise, maybe remove this method. Check what "authoritative" is supposed to mean here
         self.get_ns_iter(qname)
             .flat_map(|(_, host)| {
                 self.additional_records
@@ -118,14 +113,11 @@ impl Packet {
                     })
             })
             .cloned()
-            // TODO: can we use something else than .next()?
+            // Return first result
             .next()
     }
 
-    pub fn get_ns_host<'a>(&'a self, qname: &'a str) -> Option<&'a str> {
-        self.get_ns_iter(qname)
-            // TODO: tidy this
-            .map(|(_, host)| host)
-            .next()
+    pub fn get_some_ns_host<'a>(&'a self, qname: &'a str) -> Option<&'a str> {
+        self.get_ns_iter(qname).map(|(_, host)| host).next()
     }
 }

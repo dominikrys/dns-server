@@ -27,7 +27,7 @@ pub enum ResourceRecord {
     },
     CNAME {
         domain: String,
-        cname: String,
+        host: String,
         ttl: u32,
     },
     MX {
@@ -100,9 +100,9 @@ impl ResourceRecord {
                 Ok(ResourceRecord::NS { domain, host, ttl })
             }
             QueryType::CNAME => {
-                let cname = buffer.read_compressed_name()?;
+                let host = buffer.read_compressed_name()?;
 
-                Ok(ResourceRecord::CNAME { domain, cname, ttl })
+                Ok(ResourceRecord::CNAME { domain, host, ttl })
             }
             QueryType::MX => {
                 let priority = buffer.read_u16()?;
@@ -186,12 +186,12 @@ impl ResourceRecord {
             }
             ResourceRecord::CNAME {
                 ref domain,
-                ref cname,
+                ref host,
                 ttl,
             } => {
                 self.write_common_fields(buffer, domain, QueryType::CNAME, ttl)?;
 
-                self.write_compressed_name_with_size(buffer, cname)?;
+                self.write_compressed_name_with_size(buffer, host)?;
             }
             ResourceRecord::MX {
                 ref domain,

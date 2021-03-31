@@ -21,7 +21,7 @@ fn lookup(qname: &str, qtype: QueryType, server: (Ipv4Addr, u16)) -> Result<Pack
     let socket = UdpSocket::bind(("0.0.0.0", 43210))?;
 
     let mut packet = Packet::new();
-    packet.header.id = 1234; // TODO: select random id?
+    packet.header.id = 1234;
     packet.header.queries_total = 1;
     packet.header.recursion_desired = true;
     packet.queries.push(Query::new(qname.to_string(), qtype));
@@ -38,9 +38,8 @@ fn lookup(qname: &str, qtype: QueryType, server: (Ipv4Addr, u16)) -> Result<Pack
 }
 
 fn recursive_lookup(qname: &str, qtype: QueryType) -> Result<Packet> {
-    // TODO: remove this hardcoded IP
-    // For now we're always starting with *a.root-servers.net*.
-    let mut ns = "198.41.0.4".parse::<Ipv4Addr>().unwrap();
+    let a_root_servers_net_ip = "198.41.0.4";
+    let mut ns = a_root_servers_net_ip.parse::<Ipv4Addr>().unwrap();
 
     loop {
         println!("Performing lookup of {:?} {} with ns {}", qtype, qname, ns);
@@ -63,8 +62,9 @@ fn recursive_lookup(qname: &str, qtype: QueryType) -> Result<Packet> {
             continue;
         }
 
-        // Resolve IP of an NS record TODO: is this broken? Try to comment the previous part and see if this still works
-        let new_ns_host = match response.get_ns_host(qname) {
+        // Resolve IP of an NS record
+        // TODO: is this broken? Try to comment the previous part and see if this still works
+        let new_ns_host = match response.get_some_ns_host(qname) {
             Some(x) => x,
             None => return Ok(response),
         };
@@ -83,63 +83,61 @@ fn recursive_lookup(qname: &str, qtype: QueryType) -> Result<Packet> {
 }
 
 fn handle_query(socket: &UdpSocket) -> Result<()> {
-    // Blocks until a reply is received
-    let mut raw_res_buffer: [u8; 512] = [0; 512];
-    let (_, src) = socket.recv_from(&mut raw_res_buffer)?;
-    let mut req_buffer = PacketBuffer::from_u8_array(raw_res_buffer);
-    let mut request = Packet::from_buffer(&mut req_buffer)?;
+    let mut raw_request_buffer: [u8; 512] = [0; 512];
+    let (_, src) = socket.recv_from(&mut raw_request_buffer)?;
+    let mut request_buffer = PacketBuffer::from_u8_array(raw_request_buffer);
+    let request = Packet::from_buffer(&mut request_buffer)?;
 
-    let mut packet = Packet::new();
-    packet.header.id = request.header.id;
-    packet.header.recursion_desired = true;
-    packet.header.recursion_available = true;
-    packet.header.response = true;
+    let mut reply_packet = Packet::new();
+    reply_packet.header.id = request.header.id;
+    reply_packet.header.recursion_desired = true;
+    reply_packet.header.recursion_available = true;
+    reply_packet.header.response = true;
 
-    // Only get one query TODO: support more
-    if let Some(query) = request.queries.pop() {
+    if request.queries.is_empty() {
+        reply_packet.header.return_code = ReturnCode::FORMERR;
+    }
+
+    for query in request.queries.iter() {
         println!("Received query: {:?}", query);
 
         if let Ok(result) = recursive_lookup(&query.qname, query.qtype) {
-            packet.queries.push(query);
-            packet.header.return_code = result.header.return_code;
+            reply_packet.queries.push(query.clone());
+            reply_packet.header.return_code = result.header.return_code;
 
             for rec in result.answer_records {
                 println!("Answer: {:?}", rec);
-                packet.answer_records.push(rec);
+                reply_packet.answer_records.push(rec);
             }
             for rec in result.authoritative_records {
                 println!("Authority: {:?}", rec);
-                packet.authoritative_records.push(rec);
+                reply_packet.authoritative_records.push(rec);
             }
             for rec in result.additional_records {
                 println!("Resource: {:?}", rec);
-                packet.additional_records.push(rec);
+                reply_packet.additional_records.push(rec);
             }
         } else {
-            packet.header.return_code = ReturnCode::SERVFAIL;
+            reply_packet.header.return_code = ReturnCode::SERVFAIL;
         }
-    } else {
-        packet.header.return_code = ReturnCode::FORMERR;
     }
 
-    let mut res_buffer = PacketBuffer::new();
-    packet.write_to_buffer(&mut res_buffer)?;
+    let mut reply_buffer = PacketBuffer::new();
+    reply_packet.write_to_buffer(&mut reply_buffer)?;
 
-    let len = res_buffer.pos();
-    let data = res_buffer.get_range(0, len)?;
+    let len = reply_buffer.pos();
+    let data = reply_buffer.get_range(0, len)?;
     socket.send_to(data, src)?;
 
     Ok(())
 }
 
 fn main() -> Result<()> {
-    // TODO: add option to choose port to bind to
     let port = 2053;
-    let socket = UdpSocket::bind(("0.0.0.0", port))?;
+    let socket = UdpSocket::bind(("127.0.0.1", port))?;
 
     println!("=== DNS server listening on port {} ===\n", port);
 
-    // TODO: don't make an infinite loop
     loop {
         match handle_query(&socket) {
             Ok(_) => {}
