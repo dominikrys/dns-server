@@ -100,6 +100,10 @@ impl Packet {
             .filter(move |(domain, _)| qname.ends_with(*domain))
     }
 
+    pub fn get_first_ns_host<'a>(&'a self, qname: &'a str) -> Option<&'a str> {
+        self.get_ns_iter(qname).map(|(_, host)| host).next()
+    }
+
     pub fn get_ns_from_additional_records(&self, qname: &str) -> Option<Ipv4Addr> {
         self.get_ns_iter(qname)
             .flat_map(|(_, host)| {
@@ -115,9 +119,5 @@ impl Packet {
             .cloned()
             // Return first result
             .next()
-    }
-
-    pub fn get_first_ns_host<'a>(&'a self, qname: &'a str) -> Option<&'a str> {
-        self.get_ns_iter(qname).map(|(_, host)| host).next()
     }
 }

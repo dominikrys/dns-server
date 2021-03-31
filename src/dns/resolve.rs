@@ -6,6 +6,7 @@ use super::return_code::ReturnCode;
 
 use std::net::IpAddr;
 use std::net::Ipv4Addr;
+use std::net::SocketAddr;
 use std::net::UdpSocket;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -13,29 +14,35 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 fn send_packet(mut packet: Packet, socket: &UdpSocket, dst_socket: &(IpAddr, u16)) -> Result<()> {
     let mut buf = PacketBuffer::new();
     packet.write_to_buffer(&mut buf)?;
-
     socket.send_to(buf.get_range(0, buf.pos())?, dst_socket)?;
 
     Ok(())
 }
 
+fn receive_packet(socket: &UdpSocket) -> Result<(Packet, SocketAddr)> {
+    let mut raw_buf: [u8; 512] = [0; 512];
+    let (_, src_socket) = socket.recv_from(&mut raw_buf)?;
+    let mut buf = PacketBuffer::from_u8_array(raw_buf);
+    let packet = Packet::from_buffer(&mut buf)?;
+
+    Ok((packet, src_socket))
+}
+
 fn lookup(qname: &str, qtype: QueryType, server: (IpAddr, u16)) -> Result<Packet> {
     let socket = UdpSocket::bind(("0.0.0.0", 43210))?;
 
-    let mut packet = Packet::new();
-    packet.header.id = 1234;
-    packet.header.queries_total = 1;
-    packet.header.recursion_desired = true;
-    packet.queries.push(Query::new(qname.to_string(), qtype));
+    let mut req_packet = Packet::new();
+    req_packet.header.id = 1234;
+    req_packet.header.queries_total = 1;
+    req_packet.header.recursion_desired = true;
+    req_packet
+        .queries
+        .push(Query::new(qname.to_string(), qtype));
 
-    send_packet(packet, &socket, &server)?;
+    send_packet(req_packet, &socket, &server)?;
 
-    // Get reply from server TODO: refactor this into its own method as it's shared
-    let mut raw_res_buffer: [u8; 512] = [0; 512];
-    socket.recv_from(&mut raw_res_buffer)?;
-    let mut res_buffer = PacketBuffer::from_u8_array(raw_res_buffer);
-
-    Packet::from_buffer(&mut res_buffer)
+    let (res_packet, _) = receive_packet(&socket)?;
+    Ok(res_packet)
 }
 
 fn recursive_lookup(qname: &str, qtype: QueryType) -> Result<Packet> {
@@ -48,33 +55,25 @@ fn recursive_lookup(qname: &str, qtype: QueryType) -> Result<Packet> {
         let server = (ns, 53);
         let response = lookup(qname, qtype, server)?;
 
-        // TODO: can we combine these into a match?
-        if !response.answer_records.is_empty() && response.header.return_code == ReturnCode::NOERROR
+        if (!response.answer_records.is_empty()
+            && response.header.return_code == ReturnCode::NOERROR)
+            || response.header.return_code == ReturnCode::NXDOMAIN
         {
             return Ok(response);
         }
 
-        if response.header.return_code == ReturnCode::NXDOMAIN {
-            return Ok(response);
-        }
-
-        // Try to resolve NS from additional records
         if let Some(new_ns) = response.get_ns_from_additional_records(qname) {
             ns = IpAddr::V4(new_ns);
             continue;
         }
 
-        // Resolve NS ourselves
         // TODO: is this broken? Try to comment the previous part and see if this still works
-        // TODO: make the "get_first" methods just reply with the full list
-        // TOOD: remove comments from these
         let new_ns_host = match response.get_first_ns_host(qname) {
             Some(x) => x,
             None => return Ok(response),
         };
-        let recursive_response = recursive_lookup(&new_ns_host, qtype)?;
 
-        // Pick an IP from the result, and recurse. Otherwise return last result.
+        let recursive_response = recursive_lookup(&new_ns_host, qtype)?;
         if let Some(new_ns) = recursive_response.get_first_a_record() {
             ns = IpAddr::V4(new_ns);
         } else {
@@ -84,24 +83,19 @@ fn recursive_lookup(qname: &str, qtype: QueryType) -> Result<Packet> {
 }
 
 pub fn handle_query(socket: &UdpSocket) -> Result<()> {
-    // Get request TODO: refactor this into its own method as it's shared
-    let mut raw_req_buffer: [u8; 512] = [0; 512];
-    let (_, src_socket) = socket.recv_from(&mut raw_req_buffer)?;
-    let mut req_buffer = PacketBuffer::from_u8_array(raw_req_buffer);
-    let request = Packet::from_buffer(&mut req_buffer)?;
+    let (req_packet, src_socket) = receive_packet(socket)?;
 
     let mut res_packet = Packet::new();
-    res_packet.header.id = request.header.id;
+    res_packet.header.id = req_packet.header.id;
     res_packet.header.recursion_desired = true;
     res_packet.header.recursion_available = true;
     res_packet.header.response = true;
 
-    // Resolve request
-    if request.queries.is_empty() {
+    if req_packet.queries.is_empty() {
         res_packet.header.return_code = ReturnCode::FORMERR;
     }
 
-    for query in request.queries.iter() {
+    for query in req_packet.queries.iter() {
         println!("Received query: {:?}", query);
 
         if let Ok(result) = recursive_lookup(&query.qname, query.qtype) {
