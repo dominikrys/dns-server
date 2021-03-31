@@ -78,34 +78,38 @@ impl Packet {
         Ok(())
     }
 
-    pub fn get_first_a_record(&self) -> Option<Ipv4Addr> {
+    pub fn get_answer_a_records(&self) -> Vec<&Ipv4Addr> {
         self.answer_records
             .iter()
             .filter_map(|record| match record {
-                ResourceRecord::A { ip_addr, .. } => Some(*ip_addr),
+                ResourceRecord::A { ip_addr, .. } => Some(ip_addr),
                 _ => None,
             })
-            .next()
+            .collect()
     }
 
-    // Returns iterator over domain and host
-    fn get_ns_iter<'a>(&'a self, qname: &'a str) -> impl Iterator<Item = (&'a str, &'a str)> {
+    fn get_ns_domain_host_iter<'a>(
+        &'a self,
+        qname: &'a str,
+    ) -> impl Iterator<Item = (&'a str, &'a str)> {
         self.authoritative_records
             .iter()
             .filter_map(|record| match record {
                 ResourceRecord::NS { domain, host, .. } => Some((domain.as_str(), host.as_str())),
                 _ => None,
             })
-            // Only include servers authoritative to the query
+            // Only include domains authoritative to the query
             .filter(move |(domain, _)| qname.ends_with(*domain))
     }
 
-    pub fn get_first_ns_host<'a>(&'a self, qname: &'a str) -> Option<&'a str> {
-        self.get_ns_iter(qname).map(|(_, host)| host).next()
+    pub fn get_ns_hosts<'a>(&'a self, qname: &'a str) -> Vec<&str> {
+        self.get_ns_domain_host_iter(qname)
+            .map(|(_, host)| host)
+            .collect()
     }
 
-    pub fn get_ns_from_additional_records(&self, qname: &str) -> Option<Ipv4Addr> {
-        self.get_ns_iter(qname)
+    pub fn get_ns_from_additional_records(&self, qname: &str) -> Vec<&Ipv4Addr> {
+        self.get_ns_domain_host_iter(qname)
             .flat_map(|(_, host)| {
                 self.additional_records
                     .iter()
@@ -116,8 +120,6 @@ impl Packet {
                         _ => None,
                     })
             })
-            .cloned()
-            // Return first result
-            .next()
+            .collect()
     }
 }

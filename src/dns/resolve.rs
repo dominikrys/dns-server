@@ -62,23 +62,22 @@ fn recursive_lookup(qname: &str, qtype: QueryType) -> Result<Packet> {
             return Ok(response);
         }
 
-        if let Some(new_ns) = response.get_ns_from_additional_records(qname) {
-            ns = IpAddr::V4(new_ns);
+        if let Some(&new_ns) = response.get_ns_from_additional_records(qname).last() {
+            ns = IpAddr::V4(*new_ns);
             continue;
         }
 
-        // TODO: is this broken? Try to comment the previous part and see if this still works
-        let new_ns_host = match response.get_first_ns_host(qname) {
-            Some(x) => x,
+        let new_ns_host = match response.get_ns_hosts(qname).last() {
+            Some(&host) => host,
             None => return Ok(response),
         };
 
         let recursive_response = recursive_lookup(&new_ns_host, qtype)?;
-        if let Some(new_ns) = recursive_response.get_first_a_record() {
-            ns = IpAddr::V4(new_ns);
-        } else {
-            return Ok(response);
-        }
+
+        ns = match recursive_response.get_answer_a_records().last() {
+            Some(&new_ns) => IpAddr::V4(*new_ns),
+            None => return Ok(response),
+        };
     }
 }
 
