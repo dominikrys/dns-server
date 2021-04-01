@@ -4,6 +4,6 @@
 #[macro_use]
 extern crate num_derive;
 
-pub mod client;
-pub mod dns_protocol;
+pub mod dns_packet;
 pub mod packet_buffer;
+pub mod resolve;

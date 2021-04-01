@@ -7,7 +7,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("=== DNS server listening on port {} ===\n", port);
 
     loop {
-        match dns_server::client::handle_query(&socket) {
+        match dns_server::resolve::handle_query(&socket) {
             Ok(_) => {}
             Err(e) => eprintln!("An error occurred: {}", e),
         }

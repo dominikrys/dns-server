@@ -548,7 +548,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_packet() {
+    fn write_and_read_packet() {
         // Arrange
         let mut packet = Packet::new();
 

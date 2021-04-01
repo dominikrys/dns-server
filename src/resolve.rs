@@ -1,4 +1,4 @@
-use crate::dns_protocol::{BufferIO, Packet, Query, QueryType, ReturnCode};
+use crate::dns_packet::{BufferIO, Packet, Query, QueryType, ReturnCode};
 use crate::packet_buffer::PacketBuffer;
 
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
