@@ -1,6 +1,6 @@
 # DNS Server
 
-[![Build Status](https://img.shields.io/github/workflow/status/dominikrys/dns-server/ci?style=flat-square)](https://github.com/dominikrys/dns-server/actions)
+[![Build Status](https://img.shields.io/github/workflow/status/dominikrys/dns-server/Continuous%20Integration?style=flat-square)](https://github.com/dominikrys/dns-server/actions)
 
 Rudimentary DNS server in Rust, with support for the most common record types. Loosely based off [Emil Hernvall's DNS guide](https://github.com/EmilHernvall/dnsguide).
 
@@ -37,6 +37,9 @@ dig @127.0.0.1 -p 2053 www.google.com
 
 Potential areas of improvement:
 
+- Write tests for:
+  - Client
+  - PacketBuffer
 - Make `write_to_buffer` and `from_buffer` methods not rely on the current buffer position
 - Add comprehensive tests
 - Support replies larger than 512B

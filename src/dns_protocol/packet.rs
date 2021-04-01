@@ -121,3 +121,44 @@ impl Packet {
             .collect()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Packet;
+    use crate::dns_protocol::packet_buffer::PacketBuffer;
+    use crate::dns_protocol::query::Query;
+    use crate::dns_protocol::query_type::QueryType;
+    use crate::dns_protocol::resource_record::ResourceRecord;
+
+    #[test]
+    fn test_packet() {
+        // Arrange
+        let mut packet = Packet::new();
+
+        packet
+            .queries
+            .push(Query::new("google.com".to_string(), QueryType::NS));
+        packet.answer_records.push(ResourceRecord::NS {
+            domain: "google.com".to_string(),
+            host: "ns1.google.com".to_string(),
+            ttl: 360,
+        });
+        packet.answer_records.push(ResourceRecord::NS {
+            domain: "google.com".to_string(),
+            host: "ns2.google.com".to_string(),
+            ttl: 360,
+        });
+
+        // Act
+        let mut buffer = PacketBuffer::new();
+        packet.write_to_buffer(&mut buffer).unwrap();
+
+        buffer.seek(0);
+        let parsed_packet = Packet::from_buffer(&mut buffer).unwrap();
+
+        // Assert
+        assert_eq!(packet.queries[0], parsed_packet.queries[0]);
+        assert_eq!(packet.answer_records[0], parsed_packet.answer_records[0]);
+        assert_eq!(packet.answer_records[1], parsed_packet.answer_records[1]);
+    }
+}
