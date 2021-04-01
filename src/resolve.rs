@@ -22,6 +22,48 @@ fn receive_packet(socket: &UdpSocket) -> Result<(Packet, SocketAddr)> {
     Ok((packet, src_socket))
 }
 
+pub fn handle_query(socket: &UdpSocket) -> Result<()> {
+    let (req_packet, src_socket) = receive_packet(socket)?;
+
+    let mut res_packet = Packet::new();
+    res_packet.header.id = req_packet.header.id;
+    res_packet.header.recursion_desired = true;
+    res_packet.header.recursion_available = true;
+    res_packet.header.response = true;
+
+    if req_packet.queries.is_empty() {
+        res_packet.header.return_code = ReturnCode::FORMERR;
+    }
+
+    for query in req_packet.queries.iter() {
+        println!("Received query: {:?}", query);
+
+        if let Ok(result) = recursive_lookup(&query.qname, query.qtype) {
+            res_packet.queries.push(query.clone());
+            res_packet.header.return_code = result.header.return_code;
+
+            for rec in result.answer_records {
+                println!("Answer record: {:?}", rec);
+                res_packet.answer_records.push(rec);
+            }
+            for rec in result.authoritative_records {
+                println!("Authority record: {:?}", rec);
+                res_packet.authoritative_records.push(rec);
+            }
+            for rec in result.additional_records {
+                println!("Additional record: {:?}", rec);
+                res_packet.additional_records.push(rec);
+            }
+        } else {
+            res_packet.header.return_code = ReturnCode::SERVFAIL;
+        }
+    }
+
+    send_packet(res_packet, socket, &(src_socket.ip(), src_socket.port()))?;
+
+    Ok(())
+}
+
 fn lookup(qname: &str, qtype: QueryType, server: (IpAddr, u16)) -> Result<Packet> {
     let socket = UdpSocket::bind(("0.0.0.0", 43210))?;
 
@@ -75,44 +117,15 @@ fn recursive_lookup(qname: &str, qtype: QueryType) -> Result<Packet> {
     }
 }
 
-pub fn handle_query(socket: &UdpSocket) -> Result<()> {
-    let (req_packet, src_socket) = receive_packet(socket)?;
-
-    let mut res_packet = Packet::new();
-    res_packet.header.id = req_packet.header.id;
-    res_packet.header.recursion_desired = true;
-    res_packet.header.recursion_available = true;
-    res_packet.header.response = true;
-
-    if req_packet.queries.is_empty() {
-        res_packet.header.return_code = ReturnCode::FORMERR;
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn lookup() {
+        // TODO
     }
 
-    for query in req_packet.queries.iter() {
-        println!("Received query: {:?}", query);
-
-        if let Ok(result) = recursive_lookup(&query.qname, query.qtype) {
-            res_packet.queries.push(query.clone());
-            res_packet.header.return_code = result.header.return_code;
-
-            for rec in result.answer_records {
-                println!("Answer record: {:?}", rec);
-                res_packet.answer_records.push(rec);
-            }
-            for rec in result.authoritative_records {
-                println!("Authority record: {:?}", rec);
-                res_packet.authoritative_records.push(rec);
-            }
-            for rec in result.additional_records {
-                println!("Additional record: {:?}", rec);
-                res_packet.additional_records.push(rec);
-            }
-        } else {
-            res_packet.header.return_code = ReturnCode::SERVFAIL;
-        }
+    #[test]
+    fn recursive_lookup() {
+        // TODO
     }
-
-    send_packet(res_packet, socket, &(src_socket.ip(), src_socket.port()))?;
-
-    Ok(())
 }

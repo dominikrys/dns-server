@@ -183,3 +183,16 @@ impl PacketBuffer {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn read_compressed_name() {
+        // TODO
+    }
+
+    #[test]
+    fn write_compressed_name() {
+        // TODO
+    }
+}
