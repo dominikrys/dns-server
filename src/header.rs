@@ -3,8 +3,6 @@ use super::return_code::ReturnCode;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-// Reference: http://www.networksorcery.com/enp/protocol/dns.htm
-
 #[derive(Clone, Debug)]
 pub struct Header {
     pub id: u16,

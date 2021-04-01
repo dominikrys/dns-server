@@ -1,3 +1,4 @@
+#![allow(clippy::new_without_default)]
 #![allow(clippy::upper_case_acronyms)]
 
 #[macro_use]

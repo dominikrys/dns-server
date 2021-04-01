@@ -100,7 +100,7 @@ impl Packet {
             .filter(move |(domain, _)| qname.ends_with(*domain))
     }
 
-    pub fn get_ns_hosts<'a>(&'a self, qname: &'a str) -> Vec<&str> {
+    pub fn get_ns_hosts<'a>(&'a self, qname: &'a str) -> Vec<&'a str> {
         self.get_ns_domain_host_iter(qname)
             .map(|(_, host)| host)
             .collect()
