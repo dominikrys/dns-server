@@ -1,8 +1,8 @@
-use super::packet::Packet;
-use super::packet_buffer::PacketBuffer;
-use super::query::Query;
-use super::query_type::QueryType;
-use super::return_code::ReturnCode;
+use super::dns_protocol::packet::Packet;
+use super::dns_protocol::packet_buffer::PacketBuffer;
+use super::dns_protocol::query::Query;
+use super::dns_protocol::query_type::QueryType;
+use super::dns_protocol::return_code::ReturnCode;
 
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
 
@@ -99,15 +99,15 @@ pub fn handle_query(socket: &UdpSocket) -> Result<()> {
             res_packet.header.return_code = result.header.return_code;
 
             for rec in result.answer_records {
-                println!("Answer rec: {:?}", rec);
+                println!("Answer record: {:?}", rec);
                 res_packet.answer_records.push(rec);
             }
             for rec in result.authoritative_records {
-                println!("Authority rec: {:?}", rec);
+                println!("Authority record: {:?}", rec);
                 res_packet.authoritative_records.push(rec);
             }
             for rec in result.additional_records {
-                println!("Additional rec: {:?}", rec);
+                println!("Additional record: {:?}", rec);
                 res_packet.additional_records.push(rec);
             }
         } else {

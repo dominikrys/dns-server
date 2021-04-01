@@ -35,19 +35,15 @@ dig @127.0.0.1 -p 2053 www.google.com
 
 ## TODO
 
-- refactor code
-  - should we include more stuff in one file? protocol, buffer, server
-  - alternatively, is there a way to reduce the amount of `use super::*`?
-  - maybe use [`pub use`](https://www.reddit.com/r/rust/comments/6x49mu/what_are_some_rules_of_thumb_for_use/dmd07yr?utm_source=share&utm_medium=web2x&context=3)?
-  - are the file names correct?
-- add important tests
+Potential areas of improvement:
+
 - Make `write_to_buffer` and `from_buffer` methods not rely on the current buffer position
-- Extra functionality:
-  - Concurrency
-  - TCP connections
-  - Support replies larger than 512B
-  - Resolve using other servers than a root servers
-  - Host our own zones? Allow to act a authoritative server?
-  - DNSSEC?
-  - Add SOA records?
-- make public, put featured on profile, make sure badge shows up
+- Add comprehensive tests
+- Support replies larger than 512B
+- Concurrency
+- Support TCP connections
+- Start resolving using other servers than the A root server
+- Allow hosting own zones
+- Allow acting as an authoritative server
+- DNSSEC
+- Add support for more records (SOA, TXT, SRV, OPT)
