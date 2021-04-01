@@ -37,11 +37,10 @@ dig @127.0.0.1 -p 2053 www.google.com
 
 - Complete tests (check `TODO`s in code)
 - Make `write_to_buffer` and `from_buffer` methods not rely on the current buffer position
-- Support replies larger than 512B
+- Support replies larger than 512B (TCP connections)
 - Concurrency
-- Support TCP connections
 - Start resolving using other servers than the A root server
-- Allow hosting own zones
+- Add support for hosting zones
 - Allow acting as an authoritative server
 - DNSSEC
 - Add support for more records (SOA, TXT, SRV, OPT)
