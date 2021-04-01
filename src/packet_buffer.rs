@@ -88,7 +88,7 @@ impl PacketBuffer {
             if pointer {
                 if jumps_performed == 0 {
                     // Advance past the current label
-                    self.seek(pos + std::mem::size_of::<u16>());
+                    self.seek(pos + 2);
                 }
 
                 let offset_b1 = (label_len as u16) ^ (two_msb_mask as u16);

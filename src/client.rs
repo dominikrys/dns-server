@@ -1,8 +1,5 @@
-use super::dns_protocol::packet::Packet;
-use super::dns_protocol::packet_buffer::PacketBuffer;
-use super::dns_protocol::query::Query;
-use super::dns_protocol::query_type::QueryType;
-use super::dns_protocol::return_code::ReturnCode;
+use crate::dns_protocol::{Packet, Query, QueryType, ReturnCode};
+use crate::packet_buffer::PacketBuffer;
 
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
 

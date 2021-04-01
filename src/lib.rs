@@ -6,3 +6,4 @@ extern crate num_derive;
 
 pub mod client;
 pub mod dns_protocol;
+pub mod packet_buffer;
