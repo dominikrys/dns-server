@@ -6,6 +6,13 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub const INTERNET_CLASS: u16 = 1;
 
+pub trait BufferIO {
+    fn from_buffer(buffer: &mut PacketBuffer) -> Result<Self>
+    where
+        Self: Sized;
+    fn write_to_buffer(&mut self, buffer: &mut PacketBuffer) -> Result<()>;
+}
+
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 #[repr(u16)]
 pub enum QueryType {
@@ -58,8 +65,10 @@ impl Query {
             class: INTERNET_CLASS,
         }
     }
+}
 
-    pub fn from_buffer(buffer: &mut PacketBuffer) -> Result<Query> {
+impl BufferIO for Query {
+    fn from_buffer(buffer: &mut PacketBuffer) -> Result<Self> {
         let qname = buffer.read_compressed_name()?;
         let qtype = QueryType::from_num(buffer.read_u16()?);
         let _class = buffer.read_u16()?;
@@ -67,7 +76,7 @@ impl Query {
         Ok(Query::new(qname, qtype))
     }
 
-    pub fn write_to_buffer(&self, buffer: &mut PacketBuffer) -> Result<()> {
+    fn write_to_buffer(&mut self, buffer: &mut PacketBuffer) -> Result<()> {
         buffer.write_compressed_name(&self.qname)?;
         buffer.write_u16(self.qtype.to_num())?;
         buffer.write_u16(self.class)?;
@@ -75,7 +84,6 @@ impl Query {
         Ok(())
     }
 }
-
 #[derive(Copy, Clone, Debug, PartialEq, FromPrimitive)]
 pub enum ReturnCode {
     NOERROR = 0,
@@ -131,8 +139,10 @@ impl Header {
             additional_rr_total: 0,
         }
     }
+}
 
-    pub fn from_buffer(buffer: &mut PacketBuffer) -> Result<Self> {
+impl BufferIO for Header {
+    fn from_buffer(buffer: &mut PacketBuffer) -> Result<Self> {
         let mut header = Self::new();
 
         header.id = buffer.read_u16()?;
@@ -161,7 +171,7 @@ impl Header {
         Ok(header)
     }
 
-    pub fn write_to_buffer(&self, buffer: &mut PacketBuffer) -> Result<()> {
+    fn write_to_buffer(&mut self, buffer: &mut PacketBuffer) -> Result<()> {
         buffer.write_u16(self.id)?;
 
         let mut flags_b1 = (self.response as u8) << 7;
@@ -205,55 +215,6 @@ impl Packet {
             authoritative_records: Vec::new(),
             additional_records: Vec::new(),
         }
-    }
-
-    pub fn from_buffer(buffer: &mut PacketBuffer) -> Result<Packet> {
-        let mut packet = Packet::new();
-        packet.header = Header::from_buffer(buffer)?;
-
-        for _ in 0..packet.header.queries_total {
-            let query = Query::from_buffer(buffer)?;
-            packet.queries.push(query);
-        }
-
-        for _ in 0..packet.header.answer_rr_total {
-            let record = ResourceRecord::from_buffer(buffer)?;
-            packet.answer_records.push(record);
-        }
-        for _ in 0..packet.header.authoritative_rr_total {
-            let record = ResourceRecord::from_buffer(buffer)?;
-            packet.authoritative_records.push(record);
-        }
-        for _ in 0..packet.header.additional_rr_total {
-            let record = ResourceRecord::from_buffer(buffer)?;
-            packet.additional_records.push(record);
-        }
-
-        Ok(packet)
-    }
-
-    pub fn write_to_buffer(&mut self, buffer: &mut PacketBuffer) -> Result<()> {
-        self.header.queries_total = self.queries.len() as u16;
-        self.header.answer_rr_total = self.answer_records.len() as u16;
-        self.header.authoritative_rr_total = self.authoritative_records.len() as u16;
-        self.header.additional_rr_total = self.additional_records.len() as u16;
-
-        self.header.write_to_buffer(buffer)?;
-
-        for query in &self.queries {
-            query.write_to_buffer(buffer)?;
-        }
-        for rec in &self.answer_records {
-            rec.write_to_buffer(buffer)?;
-        }
-        for rec in &self.authoritative_records {
-            rec.write_to_buffer(buffer)?;
-        }
-        for rec in &self.additional_records {
-            rec.write_to_buffer(buffer)?;
-        }
-
-        Ok(())
     }
 
     pub fn get_answer_a_records(&self) -> Vec<&Ipv4Addr> {
@@ -302,6 +263,57 @@ impl Packet {
     }
 }
 
+impl BufferIO for Packet {
+    fn from_buffer(buffer: &mut PacketBuffer) -> Result<Self> {
+        let mut packet = Packet::new();
+        packet.header = Header::from_buffer(buffer)?;
+
+        for _ in 0..packet.header.queries_total {
+            let query = Query::from_buffer(buffer)?;
+            packet.queries.push(query);
+        }
+
+        for _ in 0..packet.header.answer_rr_total {
+            let record = ResourceRecord::from_buffer(buffer)?;
+            packet.answer_records.push(record);
+        }
+        for _ in 0..packet.header.authoritative_rr_total {
+            let record = ResourceRecord::from_buffer(buffer)?;
+            packet.authoritative_records.push(record);
+        }
+        for _ in 0..packet.header.additional_rr_total {
+            let record = ResourceRecord::from_buffer(buffer)?;
+            packet.additional_records.push(record);
+        }
+
+        Ok(packet)
+    }
+
+    fn write_to_buffer(&mut self, buffer: &mut PacketBuffer) -> Result<()> {
+        self.header.queries_total = self.queries.len() as u16;
+        self.header.answer_rr_total = self.answer_records.len() as u16;
+        self.header.authoritative_rr_total = self.authoritative_records.len() as u16;
+        self.header.additional_rr_total = self.additional_records.len() as u16;
+
+        self.header.write_to_buffer(buffer)?;
+
+        for query in &mut self.queries {
+            query.write_to_buffer(buffer)?;
+        }
+        for rec in &mut self.answer_records {
+            rec.write_to_buffer(buffer)?;
+        }
+        for rec in &mut self.authoritative_records {
+            rec.write_to_buffer(buffer)?;
+        }
+        for rec in &mut self.additional_records {
+            rec.write_to_buffer(buffer)?;
+        }
+
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum ResourceRecord {
     UNKNOWN {
@@ -339,7 +351,40 @@ pub enum ResourceRecord {
 }
 
 impl ResourceRecord {
-    pub fn from_buffer(buffer: &mut PacketBuffer) -> Result<ResourceRecord> {
+    fn write_common_fields(
+        &self,
+        buffer: &mut PacketBuffer,
+        domain: &str,
+        qtype: QueryType,
+        ttl: u32,
+    ) -> Result<()> {
+        buffer.write_compressed_name(domain)?;
+        buffer.write_u16(qtype.to_num())?;
+        buffer.write_u16(INTERNET_CLASS)?;
+        buffer.write_u32(ttl)?;
+
+        Ok(())
+    }
+
+    fn write_compressed_name_with_size(&self, buffer: &mut PacketBuffer, name: &str) -> Result<()> {
+        // Skip over size field
+        let name_size_field_len = 2;
+        buffer.step(name_size_field_len);
+
+        // Write name and get its size
+        let name_start_pos = buffer.pos();
+        buffer.write_compressed_name(name)?;
+        let name_size = buffer.pos() - name_start_pos;
+
+        // Write previously skipped size field
+        buffer.set_u16(name_start_pos - name_size_field_len, name_size as u16)?;
+
+        Ok(())
+    }
+}
+
+impl BufferIO for ResourceRecord {
+    fn from_buffer(buffer: &mut PacketBuffer) -> Result<Self> {
         let domain = buffer.read_compressed_name()?;
 
         let qtype_num = buffer.read_u16()?;
@@ -422,38 +467,7 @@ impl ResourceRecord {
         }
     }
 
-    fn write_common_fields(
-        &self,
-        buffer: &mut PacketBuffer,
-        domain: &str,
-        qtype: QueryType,
-        ttl: u32,
-    ) -> Result<()> {
-        buffer.write_compressed_name(domain)?;
-        buffer.write_u16(qtype.to_num())?;
-        buffer.write_u16(INTERNET_CLASS)?;
-        buffer.write_u32(ttl)?;
-
-        Ok(())
-    }
-
-    fn write_compressed_name_with_size(&self, buffer: &mut PacketBuffer, name: &str) -> Result<()> {
-        // Skip over size field
-        let name_size_field_len = 2;
-        buffer.step(name_size_field_len);
-
-        // Write name and get its size
-        let name_start_pos = buffer.pos();
-        buffer.write_compressed_name(name)?;
-        let name_size = buffer.pos() - name_start_pos;
-
-        // Write previously skipped size field
-        buffer.set_u16(name_start_pos - name_size_field_len, name_size as u16)?;
-
-        Ok(())
-    }
-
-    pub fn write_to_buffer(&self, buffer: &mut PacketBuffer) -> Result<()> {
+    fn write_to_buffer(&mut self, buffer: &mut PacketBuffer) -> Result<()> {
         match *self {
             ResourceRecord::A {
                 ref domain,
