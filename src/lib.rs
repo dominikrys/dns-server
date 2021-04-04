@@ -6,4 +6,4 @@ extern crate num_derive;
 
 pub mod dns_packet;
 pub mod packet_buffer;
-pub mod resolve;
+pub mod resolver;
