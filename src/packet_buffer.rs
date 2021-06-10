@@ -186,13 +186,24 @@ impl PacketBuffer {
 
 #[cfg(test)]
 mod tests {
-    #[test]
-    fn read_compressed_name() {
-        // TODO
-    }
+    use super::*;
 
     #[test]
-    fn write_compressed_name() {
-        // TODO
+    fn write_and_read_compressed_name() -> Result<()> {
+        // Arrange
+        let mut buffer = PacketBuffer::new();
+        let domain_name = "ns1.google.com";
+
+        // Act
+        buffer.write_compressed_name(domain_name)?;
+
+        // Assert
+        assert_eq!(domain_name.len() + 2, buffer.pos());
+
+        buffer.seek(0);
+        let read_domain_name = buffer.read_compressed_name()?;
+        assert_eq!(domain_name, read_domain_name);
+
+        Ok(())
     }
 }
