@@ -558,12 +558,12 @@ mod tests {
         packet.answer_records.push(ResourceRecord::NS {
             domain: "google.com".to_string(),
             host: "ns1.google.com".to_string(),
-            ttl: 360,
+            ttl: 64,
         });
         packet.answer_records.push(ResourceRecord::NS {
             domain: "google.com".to_string(),
             host: "ns2.google.com".to_string(),
-            ttl: 360,
+            ttl: 64,
         });
 
         // Act
