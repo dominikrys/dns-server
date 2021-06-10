@@ -190,14 +190,14 @@ mod tests {
 
     #[test]
     fn write_and_read_compressed_name() -> Result<()> {
-        // Arrange
+        /* Arrange */
         let mut buffer = PacketBuffer::new();
         let domain_name = "ns1.google.com";
 
-        // Act
+        /* Act */
         buffer.write_compressed_name(domain_name)?;
 
-        // Assert
+        /* Assert */
         assert_eq!(domain_name.len() + 2, buffer.pos());
 
         buffer.seek(0);

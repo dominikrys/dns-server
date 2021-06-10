@@ -140,13 +140,59 @@ impl Resolver {
 
 #[cfg(test)]
 mod tests {
-    #[test]
-    fn lookup() {
-        // TODO
-    }
+    use super::*;
 
     #[test]
-    fn recursive_lookup() {
-        // TODO
+    fn recursive_lookup() -> Result<()> {
+        /* Arrange */
+        let localhost_str = "127.0.0.1";
+        let localhost_addr = localhost_str.parse::<Ipv4Addr>()?;
+
+        // Resolver
+        let resolver_port = 2053;
+        let resolver = Resolver::new(localhost_str, resolver_port)?;
+
+        // Client
+        let socket = UdpSocket::bind((localhost_str, 2054))?;
+
+        // Query Packet
+        let qname = "google.com";
+        let qtype = QueryType::A;
+
+        let mut packet = Packet::new();
+        packet.header.id = 123;
+        packet.header.queries_total = 1;
+        packet.header.recursion_desired = true;
+        packet.queries.push(Query::new(qname.to_string(), qtype));
+
+        let mut req_buffer = PacketBuffer::new();
+        packet.write_to_buffer(&mut req_buffer)?;
+
+        /* Act */
+        socket.send_to(
+            req_buffer.get_range(0, req_buffer.pos())?,
+            (localhost_addr, resolver_port),
+        )?;
+
+        resolver.handle_query()?;
+
+        let mut raw_buf: [u8; 512] = [0; 512];
+        socket.recv_from(&mut raw_buf)?;
+        let mut res_buf = PacketBuffer::from_u8_array(raw_buf);
+        let res_packet = Packet::from_buffer(&mut res_buf)?;
+
+        /* Assert */
+        assert!(res_packet.queries.len() > 0);
+        assert_eq!(res_packet.queries[0].qname, "google.com");
+
+        assert!(res_packet.answer_records.len() > 0);
+        match res_packet.answer_records[0] {
+            crate::dns_packet::ResourceRecord::A { ref domain, .. } => {
+                assert_eq!("google.com", domain);
+            }
+            _ => panic!(),
+        }
+
+        Ok(())
     }
 }

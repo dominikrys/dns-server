@@ -549,7 +549,7 @@ mod tests {
 
     #[test]
     fn write_and_read_packet() {
-        // Arrange
+        /* Arrange */
         let mut packet = Packet::new();
 
         packet
@@ -566,14 +566,14 @@ mod tests {
             ttl: 64,
         });
 
-        // Act
+        /* Act */
         let mut buffer = PacketBuffer::new();
         packet.write_to_buffer(&mut buffer).unwrap();
 
         buffer.seek(0);
         let parsed_packet = Packet::from_buffer(&mut buffer).unwrap();
 
-        // Assert
+        /* Assert */
         assert_eq!(packet.queries[0], parsed_packet.queries[0]);
         assert_eq!(packet.answer_records[0], parsed_packet.answer_records[0]);
         assert_eq!(packet.answer_records[1], parsed_packet.answer_records[1]);
