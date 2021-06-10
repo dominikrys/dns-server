@@ -35,7 +35,9 @@ dig @127.0.0.1 -p 2053 www.google.com
 - [DNS packet structure reference](http://www.networksorcery.com/enp/protocol/dns.htm)
 - [Domain name compression explanation](https://docstore.mik.ua/orelly/networking_2ndEd/dns/ch15_02.htm)
 
-## Possible Improvements
+## Further Improvements
+
+I've achieved what I wanted to with this project, but there are some further improvements that could be made:
 
 - Make `write_to_buffer` and `from_buffer` methods not rely on the current buffer position
 - Support replies larger than 512B (TCP connection support is necessary for this)
