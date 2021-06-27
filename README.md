@@ -6,6 +6,10 @@ Rudimentary DNS server implementation in Rust with support for the most common D
 
 The aim of this project was to learn about Rust and DNS protocols.
 
+## Demo
+
+[![asciicast](https://asciinema.org/a/422536.svg)](https://asciinema.org/a/422536)
+
 ## Build Instructions
 
 Rust (stable or nightly) needs to be installed. Then run:
