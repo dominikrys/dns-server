@@ -27,8 +27,8 @@ pub enum QueryType {
 }
 
 impl QueryType {
-    pub fn to_num(&self) -> u16 {
-        match *self {
+    pub fn to_num(self) -> u16 {
+        match self {
             Self::A => 1,
             Self::NS => 2,
             Self::CNAME => 5,
