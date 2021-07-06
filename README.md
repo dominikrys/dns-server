@@ -2,7 +2,7 @@
 
 [![Build Status](https://img.shields.io/github/workflow/status/dominikrys/dns-server/Continuous%20Integration?style=flat-square)](https://github.com/dominikrys/dns-server/actions)
 
-Rudimentary DNS server implementation in Rust with support for the most common DNS record types. Loosely based off [Emil Hernvall's DNS guide](https://github.com/EmilHernvall/dnsguide).
+Rudimentary DNS server implementation in Rust with support for the most common DNS record types. Loosely based off [Emil Hernvall's DNS guide](https://github.com/EmilHernvall/dnsguide). Non-exhaustive tests are also provided.
 
 The aim of this project was to learn about Rust and DNS protocols.
 
@@ -12,7 +12,7 @@ The aim of this project was to learn about Rust and DNS protocols.
 
 ## Build Instructions
 
-Rust (stable or nightly) needs to be installed. Then run:
+[Rust](https://www.rust-lang.org/) (stable or nightly) needs to be installed. Then, run:
 
 ```bash
 cargo build
@@ -20,7 +20,7 @@ cargo build
 
 For automated pre-commit checks, a [Lefthook](https://github.com/evilmartians/lefthook) script is provided.
 
-## Run Instructions
+## How to Run
 
 Run the server:
 
@@ -28,10 +28,16 @@ Run the server:
 cargo run
 ```
 
-Send DNS query to port 2053:
+Then, while the server is running, send a DNS query to port 2053:
 
 ```bash
 dig @127.0.0.1 -p 2053 www.google.com
+```
+
+To run the provided tests:
+
+```bash
+cargo test
 ```
 
 ## Links
