@@ -128,7 +128,7 @@ impl Resolver {
                 None => return Ok(response),
             };
 
-            let recursive_response = self.recursive_lookup(&new_ns_host, qtype)?;
+            let recursive_response = self.recursive_lookup(new_ns_host, qtype)?;
 
             ns = match recursive_response.get_answer_a_records().last() {
                 Some(&new_ns) => IpAddr::V4(*new_ns),
