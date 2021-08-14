@@ -1,5 +1,5 @@
 [package]
-name = "dns-server"
+name = "iris"
 version = "0.1.0"
 authors = ["Dominik Rys <dominik.j.rys@gmail.com>"]
 edition = "2018"

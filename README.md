@@ -1,6 +1,6 @@
-# DNS Server
+# Iris
 
-[![Build Status](https://img.shields.io/github/workflow/status/dominikrys/dns-server/Continuous%20Integration?style=flat-square)](https://github.com/dominikrys/dns-server/actions)
+[![Build Status](https://img.shields.io/github/workflow/status/dominikrys/iris/Continuous%20Integration?style=flat-square)](https://github.com/dominikrys/iris/actions)
 
 Rudimentary DNS server implementation in Rust with support for the most common DNS record types. Written with the help of [Emil Hernvall's DNS guide](https://github.com/EmilHernvall/dnsguide). Non-exhaustive tests are also provided.
 

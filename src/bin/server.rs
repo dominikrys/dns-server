@@ -1,4 +1,4 @@
-use dns_server::resolver::Resolver;
+use iris::resolver::Resolver;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let port = 2053;
